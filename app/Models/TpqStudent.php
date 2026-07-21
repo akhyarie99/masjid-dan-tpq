@@ -1,0 +1,99 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Facades\Hash;
+use Spatie\Activitylog\LogOptions;
+use Spatie\Activitylog\Traits\LogsActivity;
+
+class TpqStudent extends Model
+{
+    use HasUuids, LogsActivity, SoftDeletes;
+
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()->logOnlyDirty()->logAll()->logExcept(['guardian_password']);
+    }
+
+    protected $fillable = [
+        'masjid_id',
+        'nis',
+        'name',
+        'nik',
+        'birth_place',
+        'birth_date',
+        'gender',
+        'address',
+        'photo',
+        'father_name',
+        'mother_name',
+        'guardian_name',
+        'guardian_phone',
+        'guardian_whatsapp',
+        'guardian_password',
+        'parent_occupation',
+        'status',
+        'entry_date',
+        'exit_date',
+        'notes',
+    ];
+
+    protected $hidden = [
+        'guardian_password',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'birth_date' => 'date',
+            'entry_date' => 'date',
+            'exit_date' => 'date',
+            'guardian_password' => 'hashed',
+        ];
+    }
+
+    public function masjid(): BelongsTo
+    {
+        return $this->belongsTo(Masjid::class);
+    }
+
+    public function studentClasses(): HasMany
+    {
+        return $this->hasMany(TpqStudentClass::class, 'student_id');
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(TpqAttendance::class, 'student_id');
+    }
+
+    public function grades(): HasMany
+    {
+        return $this->hasMany(TpqGrade::class, 'student_id');
+    }
+
+    public function hafalanProgress(): HasMany
+    {
+        return $this->hasMany(TpqHafalanProgress::class, 'student_id');
+    }
+
+    public function reportCards(): HasMany
+    {
+        return $this->hasMany(TpqReportCard::class, 'student_id');
+    }
+
+    public function sppBills(): HasMany
+    {
+        return $this->hasMany(TpqSppBill::class, 'student_id');
+    }
+
+    public function certificates(): HasMany
+    {
+        return $this->hasMany(TpqCertificate::class, 'student_id');
+    }
+}

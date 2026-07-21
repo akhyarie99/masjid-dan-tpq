@@ -1,0 +1,20 @@
+{
+  "name": "SiMasjid - Sistem Informasi Manajemen Masjid",
+  "short_name": "SiMasjid",
+  "description": "Aplikasi manajemen masjid: keuangan, aset, kegiatan, TPQ, jadwal shalat, dan portal jamaah.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#16a34a",
+  "orientation": "portrait-primary",
+  "lang": "id",
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Amiri:ital,wght@0,400;0,700;1,400&display=swap');
+@import 'tailwindcss';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+@source '../**/*.vue';
+
+/* Class-based dark mode, toggled via .dark on <html> (see useDarkMode composable) */
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+    --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+    --font-arabic: 'Amiri', serif;
+    --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+
+    --breakpoint-xs: 375px;
+
+    /* Brand — Islamic green palette */
+    --color-primary-50: #f0fdf4;
+    --color-primary-100: #dcfce7;
+    --color-primary-200: #bbf7d0;
+    --color-primary-300: #86efac;
+    --color-primary-400: #4ade80;
+    --color-primary-500: #22c55e;
+    --color-primary-600: #16a34a;
+    --color-primary-700: #15803d;
+    --color-primary-800: #166534;
+    --color-primary-900: #14532d;
+    --color-primary-950: #052e16;
+
+    --color-gold-400: #fbbf24;
+    --color-gold-500: #f59e0b;
+    --color-gold-600: #d97706;
+
+    /* Dark mode surfaces */
+    --color-dark-bg: #0f172a;
+    --color-dark-surface: #1e293b;
+    --color-dark-border: #334155;
+    --color-dark-muted: #475569;
+}
+
+@layer base {
+    /* Light mode default */
+    :root {
+        --bg-base: var(--color-slate-50);
+        --bg-surface: var(--color-white);
+        --bg-muted: var(--color-slate-100);
+        --text-primary: var(--color-slate-900);
+        --text-muted: var(--color-slate-500);
+        --border: var(--color-slate-200);
+    }
+
+    /* Dark mode override */
+    .dark {
+        --bg-base: var(--color-dark-bg);
+        --bg-surface: var(--color-dark-surface);
+        --bg-muted: var(--color-dark-border);
+        --text-primary: var(--color-slate-100);
+        --text-muted: var(--color-slate-400);
+        --border: var(--color-dark-border);
+    }
+
+    body {
+        @apply bg-[var(--bg-base)] text-[var(--text-primary)] transition-colors duration-200;
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Scrollbar dark mode */
+    .dark ::-webkit-scrollbar-track { @apply bg-dark-surface; }
+    .dark ::-webkit-scrollbar-thumb { @apply bg-dark-muted rounded-full; }
+}
+
+@layer components {
+    /* Card */
+    .card {
+        @apply bg-[var(--bg-surface)] border border-[var(--border)] rounded-2xl shadow-sm;
+    }
+
+    /* Input */
+    .input {
+        @apply w-full px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg-surface)]
+               text-[var(--text-primary)] placeholder-[var(--text-muted)]
+               focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent
+               transition-all duration-150 text-sm;
+    }
+
+    /* Button */
+    .btn-primary {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-600 hover:bg-primary-700
+               text-white font-medium text-sm transition-colors duration-150 disabled:opacity-50;
+    }
+    .btn-secondary {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-[var(--bg-muted)]
+               hover:bg-[var(--border)] text-[var(--text-primary)] font-medium text-sm transition-colors;
+    }
+    .btn-danger {
+        @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-red-500 hover:bg-red-600
+               text-white font-medium text-sm transition-colors;
+    }
+
+    /* Badge */
+    .badge, .badge-green, .badge-red, .badge-yellow, .badge-blue, .badge-gray {
+        @apply inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium;
+    }
+    .badge-green  { @apply bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200; }
+    .badge-red    { @apply bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200; }
+    .badge-yellow { @apply bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200; }
+    .badge-blue   { @apply bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200; }
+    .badge-gray   { @apply bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200; }
+
+    /* Table */
+    .table-responsive { @apply w-full overflow-x-auto rounded-xl; }
+    .table { @apply w-full text-sm; }
+    .table th { @apply px-4 py-3 text-left font-semibold text-[var(--text-muted)] bg-[var(--bg-muted)] border-b border-[var(--border)] whitespace-nowrap; }
+    .table td { @apply px-4 py-3 border-b border-[var(--border)] text-[var(--text-primary)]; }
+    .table tr:last-child td { @apply border-b-0; }
+    .table tbody tr { @apply hover:bg-[var(--bg-muted)] transition-colors; }
+}
+
+@layer utilities {
+    @keyframes marquee {
+        from { transform: translateX(100%); }
+        to { transform: translateX(-100%); }
+    }
+    .animate-marquee { animation: marquee 25s linear infinite; }
+}
