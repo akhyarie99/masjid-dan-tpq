@@ -13,6 +13,34 @@
       </template>
     </PageHeader>
 
+    <AppCard title="Logo Masjid" subtitle="Logo ini dipakai di sidebar admin, portal publik, dan aplikasi Android." class="mb-6">
+      <div class="flex items-center gap-4">
+        <div class="w-20 h-20 rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] flex items-center justify-center overflow-hidden shrink-0">
+          <img v-if="logoPreview" :src="logoPreview" alt="Logo masjid" class="w-full h-full object-contain" />
+          <span v-else class="text-2xl font-bold text-primary-600">{{ masjidInitial }}</span>
+        </div>
+        <div class="flex-1 min-w-0">
+          <input ref="logoInput" type="file" accept="image/*" class="hidden" @change="onLogoSelected" />
+          <div class="flex flex-wrap gap-2">
+            <AppButton type="button" variant="secondary" :loading="logoForm.processing" @click="logoInput.click()">
+              Pilih Gambar
+            </AppButton>
+            <AppButton
+              v-if="masjid.logo_url"
+              type="button"
+              variant="secondary"
+              :loading="removeForm.processing"
+              @click="confirmRemoveLogo"
+            >
+              Hapus Logo
+            </AppButton>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-2">Format PNG/JPG/SVG, maksimal 2MB. Disarankan gambar persegi.</p>
+          <p v-if="logoForm.errors.logo" class="mt-1 text-xs text-red-500">{{ logoForm.errors.logo }}</p>
+        </div>
+      </div>
+    </AppCard>
+
     <AppCard title="Profil Masjid" subtitle="Informasi ini ditampilkan di portal publik dan digunakan untuk kalkulasi jadwal shalat.">
       <form class="space-y-4" @submit.prevent="submit">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -55,6 +83,7 @@
 </template>
 
 <script setup>
+import { computed, ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import { Users as UsersIcon, History as HistoryIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
@@ -85,5 +114,40 @@ const form = useForm({
 
 function submit() {
   form.post(route('admin.settings.masjid'))
+}
+
+const masjidInitial = computed(() => (props.masjid.name ?? '?').charAt(0).toUpperCase())
+
+const logoInput = ref(null)
+const previewUrl = ref(null)
+const logoPreview = computed(() => previewUrl.value ?? props.masjid.logo_url)
+
+const logoForm = useForm({ logo: null })
+const removeForm = useForm({})
+
+function onLogoSelected(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  previewUrl.value = URL.createObjectURL(file)
+  logoForm.logo = file
+  logoForm.post(route('admin.settings.masjid.logo'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      previewUrl.value = null
+      logoForm.reset()
+    },
+    onError: () => {
+      previewUrl.value = null
+    },
+    onFinish: () => {
+      logoInput.value.value = ''
+    },
+  })
+}
+
+function confirmRemoveLogo() {
+  if (!confirm('Hapus logo masjid?')) return
+  removeForm.delete(route('admin.settings.masjid.logo.destroy'), { preserveScroll: true })
 }
 </script>

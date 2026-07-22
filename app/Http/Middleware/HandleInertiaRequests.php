@@ -54,6 +54,7 @@ class HandleInertiaRequests extends Middleware
                 'id' => $user->masjid->id,
                 'name' => $user->masjid->name,
                 'slug' => $user->masjid->slug,
+                'logo_url' => $user->masjid->logo_url,
             ] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

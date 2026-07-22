@@ -1,8 +1,9 @@
 <template>
   <aside :class="mobile ? 'flex flex-col w-full h-full bg-[var(--bg-surface)]' : 'hidden md:flex md:flex-col w-[260px] shrink-0 h-screen sticky top-0 border-r border-[var(--border)] bg-[var(--bg-surface)]'">
     <div class="flex items-center gap-3 px-5 h-16 border-b border-[var(--border)]">
-      <div class="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold">
-        {{ masjidInitial }}
+      <div class="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold overflow-hidden shrink-0">
+        <img v-if="masjidLogo" :src="masjidLogo" alt="Logo masjid" class="w-full h-full object-contain" />
+        <span v-else>{{ masjidInitial }}</span>
       </div>
       <div class="min-w-0">
         <p class="text-sm font-semibold text-[var(--text-primary)] truncate">SiMasjid</p>
@@ -71,6 +72,7 @@ const { can } = usePermission()
 const user = computed(() => page.props.auth?.user)
 const masjidName = computed(() => page.props.masjid?.name ?? 'Masjid')
 const masjidInitial = computed(() => masjidName.value.charAt(0).toUpperCase())
+const masjidLogo = computed(() => page.props.masjid?.logo_url ?? null)
 const userInitial = computed(() => (user.value?.name ?? '?').charAt(0).toUpperCase())
 const roleLabel = computed(() => user.value?.roles?.[0] ?? '-')
 

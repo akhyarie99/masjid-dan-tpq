@@ -330,6 +330,8 @@ Route::middleware(['auth'])->group(function () {
         Route::prefix('pengaturan')->name('settings.')->group(function () {
             Route::get('/', [SettingController::class, 'index'])->name('index');
             Route::post('masjid', [SettingController::class, 'updateMasjid'])->name('masjid');
+            Route::post('masjid/logo', [SettingController::class, 'updateLogo'])->name('masjid.logo');
+            Route::delete('masjid/logo', [SettingController::class, 'removeLogo'])->name('masjid.logo.destroy');
             Route::resource('pengguna', UserController::class)->except(['show']);
             Route::get('log-aktivitas', [AuditLogController::class, 'index'])->name('audit-log');
         });

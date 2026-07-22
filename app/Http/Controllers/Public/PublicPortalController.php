@@ -94,7 +94,7 @@ class PublicPortalController extends Controller
         $masjid = Masjid::where('is_active', true)->firstOrFail();
 
         return Inertia::render('Public/Donation/Index', [
-            'masjid' => $masjid->only(['id', 'name', 'bank_accounts']),
+            'masjid' => $masjid->only(['id', 'name', 'bank_accounts', 'logo_url']),
             'midtrans' => [
                 'clientKey' => config('services.midtrans.client_key'),
                 'isProduction' => (bool) config('services.midtrans.is_production'),
@@ -128,7 +128,7 @@ class PublicPortalController extends Controller
             ->whereBetween('transaction_date', [$from, $to])->sum('amount');
 
         return Inertia::render('Public/FinancialReport', [
-            'masjid' => $masjid->only(['id', 'name']),
+            'masjid' => $masjid->only(['id', 'name', 'logo_url']),
             'period' => ['from' => $from->toDateString(), 'to' => $to->toDateString()],
             'summary' => ['income' => $income, 'expense' => $expense, 'balance' => $income - $expense],
             'breakdown' => $breakdown,
@@ -149,7 +149,7 @@ class PublicPortalController extends Controller
             ->get();
 
         return Inertia::render('Public/ImamSchedule', [
-            'masjid' => $masjid->only(['id', 'name']),
+            'masjid' => $masjid->only(['id', 'name', 'logo_url']),
             'month' => now()->month,
             'year' => now()->year,
             'schedules' => $schedules,
@@ -167,7 +167,7 @@ class PublicPortalController extends Controller
             ->get(['id', 'name', 'description', 'category', 'location', 'start_at', 'end_at', 'quota', 'registration_link']);
 
         return Inertia::render('Public/Activities', [
-            'masjid' => $masjid->only(['id', 'name']),
+            'masjid' => $masjid->only(['id', 'name', 'logo_url']),
             'activities' => $activities,
         ]);
     }
@@ -208,7 +208,7 @@ class PublicPortalController extends Controller
             ->get(['title']);
 
         return Inertia::render('Prayer/DigitalClock', [
-            'masjid' => $masjid->only(['id', 'name']),
+            'masjid' => $masjid->only(['id', 'name', 'logo_url']),
             'schedule' => $todaySchedule,
             'tickerItems' => $announcements->pluck('title'),
         ]);

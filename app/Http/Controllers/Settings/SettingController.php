@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Masjid;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
 use Inertia\Response;
 
@@ -40,5 +41,34 @@ class SettingController extends Controller
         $masjid->update($data);
 
         return back()->with('success', 'Profil masjid berhasil diperbarui.');
+    }
+
+    public function updateLogo(Request $request): RedirectResponse
+    {
+        $masjid = $request->user()->masjid;
+
+        $data = $request->validate([
+            'logo' => ['required', 'image', 'max:2048'],
+        ]);
+
+        if ($masjid->logo) {
+            Storage::disk('public')->delete($masjid->logo);
+        }
+
+        $masjid->update(['logo' => $request->file('logo')->store('masjid-logo', 'public')]);
+
+        return back()->with('success', 'Logo masjid berhasil diperbarui.');
+    }
+
+    public function removeLogo(Request $request): RedirectResponse
+    {
+        $masjid = $request->user()->masjid;
+
+        if ($masjid->logo) {
+            Storage::disk('public')->delete($masjid->logo);
+            $masjid->update(['logo' => null]);
+        }
+
+        return back()->with('success', 'Logo masjid berhasil dihapus.');
     }
 }

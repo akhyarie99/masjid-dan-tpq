@@ -11,6 +11,8 @@ class Masjid extends Model
 {
     use HasUuids;
 
+    protected $appends = ['logo_url'];
+
     protected $fillable = [
         'name',
         'slug',
