@@ -1,5 +1,8 @@
 <template>
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 h-16 pb-[env(safe-area-inset-bottom)] bg-[var(--bg-surface)] border-t border-[var(--border)] shadow-[0_-2px_8px_rgba(0,0,0,0.06)] flex items-stretch">
+  <nav
+    class="md:hidden fixed bottom-0 inset-x-0 z-30 h-16 bg-[var(--bg-surface)] border-t border-[var(--border)] shadow-[0_-2px_8px_rgba(0,0,0,0.06)] flex items-stretch"
+    :style="{ paddingBottom: navSafeAreaBottom }"
+  >
     <Link
       v-for="item in mainItems"
       :key="item.label"
@@ -34,7 +37,7 @@
         </TransitionChild>
         <div class="fixed inset-0 flex items-end">
           <TransitionChild as="template" enter="duration-150 ease-out" enter-from="translate-y-full" enter-to="translate-y-0" leave="duration-100 ease-in" leave-from="translate-y-0" leave-to="translate-y-full">
-            <DialogPanel class="w-full bg-[var(--bg-surface)] rounded-t-2xl pb-[calc(1rem+env(safe-area-inset-bottom))]">
+            <DialogPanel class="w-full bg-[var(--bg-surface)] rounded-t-2xl" :style="{ paddingBottom: sheetSafeAreaBottom }">
               <div class="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]">
                 <div class="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold shrink-0 overflow-hidden">
                   <img v-if="masjidLogo" :src="masjidLogo" alt="Logo masjid" class="w-full h-full object-contain" />
@@ -77,6 +80,13 @@ import {
 } from 'lucide-vue-next'
 
 const showMore = ref(false)
+
+// Di dalam app Android, WebviewScreen sudah membungkus WebView dengan SafeArea
+// sendiri — kalau env(safe-area-inset-bottom) tetap dipakai di sini, jaraknya
+// kehitung dua kali (native + CSS) dan nav jadi mengambang terlalu tinggi.
+const isInApp = /SimasjidApp/i.test(navigator.userAgent)
+const navSafeAreaBottom = isInApp ? '0px' : 'env(safe-area-inset-bottom)'
+const sheetSafeAreaBottom = isInApp ? '1rem' : 'calc(1rem + env(safe-area-inset-bottom))'
 
 const page = usePage()
 const masjidName = computed(() => page.props.masjid?.name ?? 'Masjid')
