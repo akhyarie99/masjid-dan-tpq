@@ -11,7 +11,9 @@
         v-if="isActive(item.route)"
         class="absolute top-0 w-8 h-0.5 rounded-full bg-primary-600"
       />
-      <component :is="item.icon" class="w-5 h-5" />
+      <span class="w-5 h-5 flex items-center justify-center shrink-0">
+        <component :is="item.icon" :size="20" />
+      </span>
       {{ item.label }}
     </Link>
 
@@ -19,7 +21,9 @@
       class="flex-1 flex flex-col items-center justify-center gap-0.5 text-[11px] font-medium text-[var(--text-muted)]"
       @click="showMore = true"
     >
-      <MoreHorizontal class="w-5 h-5" />
+      <span class="w-5 h-5 flex items-center justify-center shrink-0">
+        <MoreHorizontal :size="20" />
+      </span>
       Lainnya
     </button>
 
@@ -50,7 +54,7 @@
                   @click="showMore = false"
                 >
                   <span class="w-11 h-11 rounded-xl bg-[var(--bg-muted)] flex items-center justify-center">
-                    <component :is="item.icon" class="w-5 h-5" />
+                    <component :is="item.icon" :size="20" />
                   </span>
                   {{ item.label }}
                 </Link>
