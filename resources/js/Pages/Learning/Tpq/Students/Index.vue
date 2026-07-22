@@ -4,6 +4,8 @@
   <AdminLayout title="Data Santri">
     <PageHeader title="Data Santri" description="Kelola data santri TPQ.">
       <template #actions>
+        <a :href="route('admin.tpq.santri.import-template')" class="btn-secondary"><DownloadIcon class="w-4 h-4" /> Template</a>
+        <button class="btn-secondary" @click="showImport = true"><UploadIcon class="w-4 h-4" /> Import Excel</button>
         <Link :href="route('admin.tpq.santri.create')" class="btn-primary"><PlusIcon class="w-4 h-4" /> Tambah Santri</Link>
       </template>
     </PageHeader>
@@ -46,13 +48,29 @@
     <div class="mt-4">
       <AppPagination :links="students.links" />
     </div>
+
+    <AppModal :show="showImport" title="Import Data Santri" @close="showImport = false">
+      <form class="space-y-4" @submit.prevent="submitImport">
+        <p class="text-sm text-[var(--text-muted)]">
+          Unggah file Excel/CSV sesuai template. Kolom <code>nis</code> boleh dikosongkan (dibuat otomatis).
+          Kolom <code>kelas</code> harus persis sama dengan nama kelas yang sudah ada di menu Kelas TPQ,
+          dan santri hanya masuk kelas kalau ada tahun ajaran yang sedang aktif.
+        </p>
+        <input type="file" class="input" accept=".csv,.xlsx,.xls" @change="importForm.file = $event.target.files[0]" />
+        <p v-if="importForm.errors.file" class="text-xs text-red-500">{{ importForm.errors.file }}</p>
+      </form>
+      <template #footer>
+        <AppButton variant="secondary" @click="showImport = false">Batal</AppButton>
+        <AppButton :loading="importForm.processing" @click="submitImport">Import</AppButton>
+      </template>
+    </AppModal>
   </AdminLayout>
 </template>
 
 <script setup>
-import { reactive, watch } from 'vue'
-import { Head, Link, router } from '@inertiajs/vue3'
-import { Plus as PlusIcon } from 'lucide-vue-next'
+import { reactive, ref, watch } from 'vue'
+import { Head, Link, router, useForm } from '@inertiajs/vue3'
+import { Plus as PlusIcon, Download as DownloadIcon, Upload as UploadIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -60,6 +78,8 @@ import AppInput from '@/Components/UI/AppInput.vue'
 import AppSelect from '@/Components/UI/AppSelect.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
 import AppPagination from '@/Components/UI/AppPagination.vue'
+import AppModal from '@/Components/UI/AppModal.vue'
+import AppButton from '@/Components/UI/AppButton.vue'
 
 const props = defineProps({
   students: { type: Object, required: true },
@@ -77,6 +97,16 @@ const filters = reactive({
 watch(filters, () => {
   router.get(route('admin.tpq.santri.index'), { ...filters }, { preserveState: true, replace: true })
 }, { deep: true })
+
+const showImport = ref(false)
+const importForm = useForm({ file: null })
+
+function submitImport() {
+  importForm.post(route('admin.tpq.santri.import'), {
+    preserveScroll: true,
+    onSuccess: () => { showImport.value = false },
+  })
+}
 
 function statusLabel(status) {
   return { aktif: 'Aktif', cuti: 'Cuti', lulus: 'Lulus', keluar: 'Keluar' }[status] ?? status

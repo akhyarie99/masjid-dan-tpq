@@ -17,7 +17,7 @@
           v-if="item.route"
           :href="route(item.route)"
           class="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors border-l-[3px]"
-          :class="isActive(item.route)
+          :class="isActive(item)
             ? 'bg-primary-600 text-white border-primary-800'
             : 'text-[var(--text-primary)] border-transparent hover:bg-primary-50 dark:hover:bg-primary-900/20'"
         >
@@ -76,19 +76,35 @@ const masjidLogo = computed(() => page.props.masjid?.logo_url ?? null)
 const userInitial = computed(() => (user.value?.name ?? '?').charAt(0).toUpperCase())
 const roleLabel = computed(() => user.value?.roles?.[0] ?? '-')
 
+// `match` mendefinisikan pola route mana saja yang membuat item ini aktif.
+// Item tanpa `match` eksplisit memakai 2 segmen pertama nama route-nya (perilaku
+// lama) — cukup untuk section yang cuma punya satu entri sidebar. Item yang
+// namespace route-nya dipakai bareng beberapa entri sidebar lain (mis. semua
+// fitur Jamaah ada di bawah "admin.jamaah.*") WAJIB didaftarkan eksplisit di
+// sini, supaya tidak ikut menyala saat entri lain di namespace yang sama aktif.
 const items = [
   { label: 'Dashboard', route: 'admin.dashboard', icon: LayoutDashboard, permission: null },
-  { label: 'Keuangan', route: 'admin.finance.laporan', icon: Wallet, permission: 'finance.view' },
+  { label: 'Keuangan', route: 'admin.finance.laporan', icon: Wallet, permission: 'finance.view', match: ['admin.finance.*'] },
   { label: 'Aset', route: 'admin.asset.inventaris.index', icon: Boxes, permission: 'asset.view' },
   { label: 'Kegiatan', route: 'admin.activity.calendar', icon: CalendarDays, permission: 'activity.view' },
   { label: 'Shalat & Imam', route: 'admin.prayer.schedule', icon: Clock, permission: 'prayer.view' },
-  { label: 'Zakat', route: 'admin.finance.zakat.index', icon: HandCoins, permission: 'finance.view' },
-  { label: 'Kajian', route: 'admin.study.sesi.index', icon: BookOpen, permission: null },
-  { label: 'Majelis Taklim', route: 'admin.study.majelis.index', icon: BookOpen, permission: null },
+  { label: 'Zakat', route: 'admin.finance.zakat.index', icon: HandCoins, permission: 'finance.view', match: ['admin.finance.zakat.*'] },
+  { label: 'Kajian', route: 'admin.study.sesi.index', icon: BookOpen, permission: null, match: ['admin.study.sesi.*', 'admin.study.anggota.*'] },
+  { label: 'Majelis Taklim', route: 'admin.study.majelis.index', icon: BookOpen, permission: null, match: ['admin.study.majelis.*'] },
   { label: 'TPQ', route: 'admin.tpq.dashboard', icon: GraduationCap, permission: 'tpq.view' },
-  { label: 'Jamaah', route: 'admin.jamaah.index', icon: Users, permission: 'jamaah.view' },
-  { label: 'Program Sosial', route: 'admin.jamaah.program-sosial.index', icon: HandHeart, permission: 'jamaah.view' },
-  { label: 'Broadcast WA', route: 'admin.jamaah.broadcast', icon: MessageCircle, permission: 'jamaah.view' },
+  {
+    label: 'Jamaah',
+    route: 'admin.jamaah.index',
+    icon: Users,
+    permission: 'jamaah.view',
+    match: [
+      'admin.jamaah.index', 'admin.jamaah.create', 'admin.jamaah.store',
+      'admin.jamaah.edit', 'admin.jamaah.update', 'admin.jamaah.destroy',
+      'admin.jamaah.card', 'admin.jamaah.import', 'admin.jamaah.import-template',
+    ],
+  },
+  { label: 'Program Sosial', route: 'admin.jamaah.program-sosial.index', icon: HandHeart, permission: 'jamaah.view', match: ['admin.jamaah.program-sosial.*'] },
+  { label: 'Broadcast WA', route: 'admin.jamaah.broadcast', icon: MessageCircle, permission: 'jamaah.view', match: ['admin.jamaah.broadcast*'] },
   { label: 'Ramadhan', route: 'admin.ramadhan.index', icon: RamadhanIcon, permission: null },
   { label: 'Wakaf', route: 'admin.wakaf.index', icon: Building2, permission: null },
   { label: 'Perpustakaan', route: 'admin.library.index', icon: LibraryIcon, permission: null },
@@ -105,7 +121,8 @@ const visibleItems = computed(() =>
   })
 )
 
-function isActive(routeName) {
-  return route().current(`${routeName.split('.').slice(0, 2).join('.')}*`)
+function isActive(item) {
+  const patterns = item.match ?? [`${item.route.split('.').slice(0, 2).join('.')}*`]
+  return patterns.some((pattern) => route().current(pattern))
 }
 </script>

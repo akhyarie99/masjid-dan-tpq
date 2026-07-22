@@ -68,9 +68,21 @@
         font-family: 'Plus Jakarta Sans', sans-serif;
     }
 
-    /* Scrollbar dark mode */
-    .dark ::-webkit-scrollbar-track { @apply bg-dark-surface; }
+    /* Scrollbar - tipis & samar, bukan bar tebal bawaan browser/WebView */
+    * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--color-slate-300) transparent;
+    }
+
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { @apply bg-slate-300 rounded-full; }
+    ::-webkit-scrollbar-thumb:hover { @apply bg-slate-400; }
+
+    .dark { scrollbar-color: var(--color-dark-muted) transparent; }
+    .dark ::-webkit-scrollbar-track { background: transparent; }
     .dark ::-webkit-scrollbar-thumb { @apply bg-dark-muted rounded-full; }
+    .dark ::-webkit-scrollbar-thumb:hover { @apply bg-slate-500; }
 }
 
 @layer components {

@@ -196,6 +196,8 @@ Route::middleware(['auth'])->group(function () {
 
             Route::resource('santri', TpqStudentController::class)->except(['show']);
             Route::get('santri/{student}/kartu', [TpqStudentController::class, 'card'])->name('santri.card');
+            Route::get('santri/import/template', [TpqStudentController::class, 'importTemplate'])->name('santri.import-template');
+            Route::post('santri/import', [TpqStudentController::class, 'import'])->name('santri.import');
 
             Route::prefix('absensi')->name('attendance.')->group(function () {
                 Route::get('/', [TpqAttendanceController::class, 'index'])->name('index');

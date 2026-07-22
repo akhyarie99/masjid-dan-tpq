@@ -3,20 +3,23 @@
 namespace App\Http\Controllers\Tpq;
 
 use App\Http\Controllers\Controller;
+use App\Imports\TpqStudentImport;
 use App\Models\TpqAcademicYear;
 use App\Models\TpqClass;
 use App\Models\TpqStudent;
 use App\Models\TpqStudentClass;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Response;
 use Illuminate\Support\Str;
 use Inertia\Inertia;
-use Inertia\Response;
+use Inertia\Response as InertiaResponse;
+use Maatwebsite\Excel\Facades\Excel;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 
 class TpqStudentController extends Controller
 {
-    public function index(Request $request): Response
+    public function index(Request $request): InertiaResponse
     {
         $masjidId = $request->user()->masjid_id;
         $activeYear = TpqAcademicYear::where('masjid_id', $masjidId)->where('is_active', true)->first();
@@ -43,7 +46,7 @@ class TpqStudentController extends Controller
         ]);
     }
 
-    public function create(Request $request): Response
+    public function create(Request $request): InertiaResponse
     {
         return Inertia::render('Learning/Tpq/Students/Form', [
             'classes' => TpqClass::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->orderBy('order')->get(['id', 'name']),
@@ -76,7 +79,7 @@ class TpqStudentController extends Controller
         return redirect()->route('admin.tpq.santri.index')->with('success', 'Santri berhasil ditambahkan.');
     }
 
-    public function edit(Request $request, TpqStudent $santri): Response
+    public function edit(Request $request, TpqStudent $santri): InertiaResponse
     {
         $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
         $currentClass = TpqStudentClass::where('student_id', $santri->id)->where('academic_year_id', $activeYear?->id)->first();
@@ -113,7 +116,7 @@ class TpqStudentController extends Controller
         return back()->with('success', 'Santri berhasil dihapus.');
     }
 
-    public function card(TpqStudent $student): Response
+    public function card(TpqStudent $student): InertiaResponse
     {
         $qrSvg = base64_encode(QrCode::size(160)->generate($student->id));
 
@@ -122,6 +125,37 @@ class TpqStudentController extends Controller
             'masjidName' => $student->masjid->name,
             'qrCode' => "data:image/svg+xml;base64,{$qrSvg}",
         ]);
+    }
+
+    public function importTemplate(): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $path = storage_path('app/templates/tpq-santri-import-template.csv');
+
+        if (! file_exists($path)) {
+            @mkdir(dirname($path), 0755, true);
+            file_put_contents(
+                $path,
+                "nis,name,gender,birth_place,birth_date,father_name,mother_name,guardian_name,guardian_phone,guardian_whatsapp,parent_occupation,address,entry_date,kelas\n"
+            );
+        }
+
+        return Response::download($path, 'template-import-santri.csv');
+    }
+
+    public function import(Request $request): RedirectResponse
+    {
+        $request->validate(['file' => ['required', 'file', 'mimes:csv,xlsx,xls']]);
+
+        $import = new TpqStudentImport($request->user()->masjid_id);
+        Excel::import($import, $request->file('file'));
+
+        $failedCount = $import->failures()->count();
+        $message = "{$import->imported} santri berhasil diimpor.";
+        if ($failedCount > 0) {
+            $message .= " {$failedCount} baris dilewati karena data tidak lengkap/tidak valid.";
+        }
+
+        return back()->with('success', $message);
     }
 
     private function generateNis(string $masjidId): string
