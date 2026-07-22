@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# Deploy script SiMasjid — jalankan dari server produksi (Ubuntu 24.04) di /var/www/simasjid
+# Deploy script SiMasjid — jalankan dari server produksi (Ubuntu 24.04) di /var/www/html/tpq
 set -euo pipefail
 
-APP_DIR="/var/www/simasjid"
+APP_DIR="/var/www/html/tpq"
 cd "$APP_DIR"
 
 echo "==> Mengaktifkan mode maintenance"
