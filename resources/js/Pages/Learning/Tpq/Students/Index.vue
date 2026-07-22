@@ -2,6 +2,7 @@
   <Head title="Data Santri" />
 
   <AdminLayout title="Data Santri">
+    <TpqSubNav />
     <PageHeader title="Data Santri" description="Kelola data santri TPQ.">
       <template #actions>
         <a :href="route('admin.tpq.santri.import-template')" class="btn-secondary"><DownloadIcon class="w-4 h-4" /> Template</a>
@@ -73,6 +74,7 @@ import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon, Download as DownloadIcon, Upload as UploadIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppInput from '@/Components/UI/AppInput.vue'
 import AppSelect from '@/Components/UI/AppSelect.vue'

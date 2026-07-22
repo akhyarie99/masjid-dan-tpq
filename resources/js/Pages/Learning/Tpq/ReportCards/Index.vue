@@ -2,6 +2,7 @@
   <Head title="Raport" />
 
   <AdminLayout title="Raport TPQ">
+    <TpqSubNav />
     <PageHeader title="Raport TPQ" description="Pilih semester untuk mengelola raport santri." />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -23,6 +24,7 @@
 import { Head, Link } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import EmptyState from '@/Components/Shared/EmptyState.vue'
 
 defineProps({

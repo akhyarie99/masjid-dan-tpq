@@ -2,6 +2,7 @@
   <Head title="Semester" />
 
   <AdminLayout title="Semester">
+    <TpqSubNav />
     <PageHeader title="Semester" description="Kelola semester dalam tahun ajaran TPQ.">
       <template #actions>
         <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah</AppButton>
@@ -48,6 +49,7 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppTable from '@/Components/UI/AppTable.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'

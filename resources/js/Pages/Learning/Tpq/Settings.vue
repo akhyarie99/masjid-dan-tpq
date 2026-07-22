@@ -2,6 +2,7 @@
   <Head title="Pengaturan TPQ" />
 
   <AdminLayout title="Pengaturan TPQ">
+    <TpqSubNav />
     <PageHeader title="Pengaturan TPQ" description="Identitas lembaga dan kriteria kelulusan." />
 
     <AppCard class="max-w-2xl">
@@ -33,6 +34,7 @@
 import { Head, useForm } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppInput from '@/Components/UI/AppInput.vue'
 import AppButton from '@/Components/UI/AppButton.vue'

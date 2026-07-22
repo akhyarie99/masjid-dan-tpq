@@ -2,6 +2,7 @@
   <Head title="TPQ Dashboard" />
 
   <AdminLayout title="TPQ Dashboard">
+    <TpqSubNav />
     <PageHeader title="Dashboard TPQ" description="Ringkasan aktivitas TPQ hari ini." />
 
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
@@ -38,6 +39,7 @@ import { Users, CheckCircle, Wallet, FileText, ClipboardCheck, PenLine, Graduati
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import StatCard from '@/Components/Shared/StatCard.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 
 defineProps({
   stats: { type: Object, required: true },

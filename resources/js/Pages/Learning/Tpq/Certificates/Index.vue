@@ -2,6 +2,7 @@
   <Head title="Sertifikat" />
 
   <AdminLayout title="Sertifikat">
+    <TpqSubNav />
     <PageHeader title="Sertifikat" description="Kelola sertifikat khatam, tahfidz, dan ijazah santri.">
       <template #actions>
         <Link :href="route('admin.tpq.sertifikat.create')" class="btn-primary"><PlusIcon class="w-4 h-4" /> Terbitkan Sertifikat</Link>
@@ -34,6 +35,7 @@ import dayjs from 'dayjs'
 import { Plus as PlusIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppTable from '@/Components/UI/AppTable.vue'
 import AppPagination from '@/Components/UI/AppPagination.vue'

@@ -2,6 +2,7 @@
   <Head title="Absensi Santri" />
 
   <AdminLayout title="Absensi Santri">
+    <TpqSubNav />
     <PageHeader title="Absensi Santri" description="Pilih kelas dan tanggal untuk mengisi absensi." />
 
     <AppCard class="max-w-md">
@@ -19,6 +20,7 @@ import { ref } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppSelect from '@/Components/UI/AppSelect.vue'
 import AppInput from '@/Components/UI/AppInput.vue'

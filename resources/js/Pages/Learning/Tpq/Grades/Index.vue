@@ -2,6 +2,7 @@
   <Head title="Input Nilai" />
 
   <AdminLayout title="Input Nilai">
+    <TpqSubNav />
     <PageHeader title="Input Nilai" description="Pilih kelas dan semester untuk mengisi nilai." />
 
     <AppCard class="max-w-md">
@@ -19,6 +20,7 @@ import { ref } from 'vue'
 import { Head, router } from '@inertiajs/vue3'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppSelect from '@/Components/UI/AppSelect.vue'
 import AppButton from '@/Components/UI/AppButton.vue'

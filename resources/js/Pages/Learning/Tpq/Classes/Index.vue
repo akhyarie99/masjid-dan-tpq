@@ -2,6 +2,7 @@
   <Head title="Kelas TPQ" />
 
   <AdminLayout title="Kelas TPQ">
+    <TpqSubNav />
     <PageHeader title="Kelas TPQ" description="Kelola kelas/jenjang TPQ.">
       <template #actions>
         <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Kelas</AppButton>
@@ -78,6 +79,7 @@ import { Head, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
 import AppModal from '@/Components/UI/AppModal.vue'
 import AppInput from '@/Components/UI/AppInput.vue'

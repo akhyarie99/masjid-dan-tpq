@@ -2,6 +2,7 @@
   <Head title="SPP TPQ" />
 
   <AdminLayout title="SPP TPQ">
+    <TpqSubNav />
     <PageHeader title="SPP TPQ" :description="monthLabel">
       <template #actions>
         <AppButton variant="secondary" @click="showGenerate = true"><PlusIcon class="w-4 h-4" /> Generate Tagihan</AppButton>
@@ -82,6 +83,7 @@ import dayjs from 'dayjs'
 import { Plus as PlusIcon, Send as SendIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
+import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
 import AppSelect from '@/Components/UI/AppSelect.vue'
 import AppInput from '@/Components/UI/AppInput.vue'
