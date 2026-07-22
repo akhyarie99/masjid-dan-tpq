@@ -45,4 +45,11 @@ return [
         'is_production' => env('MIDTRANS_IS_PRODUCTION', false),
     ],
 
+    'firebase' => [
+        // Isi dengan path ke service account JSON dari Firebase Console, lalu
+        // `composer require kreait/laravel-firebase` untuk mengaktifkan push notif FCM.
+        // Sebelum itu terpasang, FcmService no-op secara aman (lihat app/Services/FcmService.php).
+        'credentials' => env('FIREBASE_CREDENTIALS'),
+    ],
+
 ];

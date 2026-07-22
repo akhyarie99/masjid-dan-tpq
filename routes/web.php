@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AnnouncementController;
+use App\Http\Controllers\Api\Mobile\WebviewLoginController;
 use App\Http\Controllers\Asset\AssetController;
 use App\Http\Controllers\Asset\AssetLoanController;
 use App\Http\Controllers\Asset\MaintenanceController;
@@ -93,6 +94,9 @@ Route::prefix('wali')->name('wali.')->group(function () {
         Route::get('/raport/{reportCard}/pdf', [WaliController::class, 'reportCardPdf'])->name('reportcard.pdf');
     });
 });
+
+// === WEBVIEW AUTO-LOGIN (Flutter app) ===
+Route::get('/webview-login', [WebviewLoginController::class, 'login'])->name('webview.login');
 
 // === PAYMENT WEBHOOK ===
 Route::post('/webhook/midtrans', [PaymentController::class, 'midtransWebhook'])->name('webhook.midtrans');

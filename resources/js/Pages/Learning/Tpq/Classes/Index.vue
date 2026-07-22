@@ -21,8 +21,8 @@
           <AppBadge :variant="kelas.is_active ? 'green' : 'gray'">{{ kelas.is_active ? 'Aktif' : 'Nonaktif' }}</AppBadge>
         </div>
         <p v-if="kelas.room" class="text-xs text-[var(--text-muted)] mt-2">📍 {{ kelas.room }}</p>
-        <p v-if="kelas.teachers?.length" class="text-xs text-[var(--text-muted)] mt-1">
-          👤 {{ kelas.teachers.map((t) => t.teacher?.name).join(', ') }}
+        <p class="text-xs text-[var(--text-muted)] mt-1">
+          👤 {{ kelas.teachers?.length ? kelas.teachers.map((t) => t.teacher?.name).join(', ') : 'Belum ada guru pengampu' }}
         </p>
         <button class="text-primary-600 text-sm hover:underline mt-3" @click="openEdit(kelas)">Edit</button>
       </div>
@@ -40,6 +40,29 @@
           <input v-model="form.is_active" type="checkbox" class="rounded border-[var(--border)] text-primary-600 focus:ring-primary-500" />
           Aktif
         </label>
+
+        <div>
+          <p class="block text-sm font-medium text-[var(--text-primary)] mb-1">Ustadz Pengampu</p>
+          <p v-if="!activeAcademicYear" class="text-xs text-amber-600 mb-2">
+            Belum ada tahun ajaran aktif — aktifkan dulu di menu Tahun Ajaran sebelum menetapkan guru pengampu.
+          </p>
+          <p v-else-if="teachers.length === 0" class="text-xs text-[var(--text-muted)] mb-2">
+            Belum ada user dengan role ustadz. Tambahkan lewat menu Pengguna.
+          </p>
+          <div v-else class="space-y-2 max-h-40 overflow-y-auto border border-[var(--border)] rounded-lg p-3">
+            <label v-for="teacher in teachers" :key="teacher.id" class="flex items-center gap-2 text-sm text-[var(--text-primary)]">
+              <input
+                type="checkbox"
+                :value="teacher.id"
+                v-model="form.teacher_ids"
+                :disabled="!activeAcademicYear"
+                class="rounded border-[var(--border)] text-primary-600 focus:ring-primary-500"
+              />
+              {{ teacher.name }}
+            </label>
+          </div>
+          <p v-if="form.errors.teacher_ids" class="mt-1 text-xs text-red-500">{{ form.errors.teacher_ids }}</p>
+        </div>
       </form>
       <template #footer>
         <AppButton variant="secondary" @click="showModal = false">Batal</AppButton>

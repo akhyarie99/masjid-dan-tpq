@@ -1,5 +1,5 @@
 <template>
-  <aside :class="mobile ? 'flex flex-col w-full h-full' : 'hidden md:flex md:flex-col w-[260px] shrink-0 h-screen sticky top-0 border-r border-[var(--border)] bg-[var(--bg-surface)]'">
+  <aside :class="mobile ? 'flex flex-col w-full h-full bg-[var(--bg-surface)]' : 'hidden md:flex md:flex-col w-[260px] shrink-0 h-screen sticky top-0 border-r border-[var(--border)] bg-[var(--bg-surface)]'">
     <div class="flex items-center gap-3 px-5 h-16 border-b border-[var(--border)]">
       <div class="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold">
         {{ masjidInitial }}

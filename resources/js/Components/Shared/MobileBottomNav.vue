@@ -1,5 +1,5 @@
 <template>
-  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 h-16 pb-[env(safe-area-inset-bottom)] bg-[var(--bg-surface)] border-t border-[var(--border)] flex items-stretch">
+  <nav class="md:hidden fixed bottom-0 inset-x-0 z-30 h-16 pb-[env(safe-area-inset-bottom)] bg-[var(--bg-surface)] border-t border-[var(--border)] shadow-[0_-2px_8px_rgba(0,0,0,0.06)] flex items-stretch">
     <Link
       v-for="item in mainItems"
       :key="item.label"
@@ -30,19 +30,30 @@
         </TransitionChild>
         <div class="fixed inset-0 flex items-end">
           <TransitionChild as="template" enter="duration-150 ease-out" enter-from="translate-y-full" enter-to="translate-y-0" leave="duration-100 ease-in" leave-from="translate-y-0" leave-to="translate-y-full">
-            <DialogPanel class="w-full bg-[var(--bg-surface)] rounded-t-2xl p-4 pb-[calc(1rem+env(safe-area-inset-bottom))] grid grid-cols-4 gap-4">
-              <Link
-                v-for="item in moreItems"
-                :key="item.label"
-                :href="route(item.route)"
-                class="flex flex-col items-center gap-1.5 text-xs text-[var(--text-primary)]"
-                @click="showMore = false"
-              >
-                <span class="w-11 h-11 rounded-xl bg-[var(--bg-muted)] flex items-center justify-center">
-                  <component :is="item.icon" class="w-5 h-5" />
-                </span>
-                {{ item.label }}
-              </Link>
+            <DialogPanel class="w-full bg-[var(--bg-surface)] rounded-t-2xl pb-[calc(1rem+env(safe-area-inset-bottom))]">
+              <div class="flex items-center gap-3 px-4 py-3 border-b border-[var(--border)]">
+                <div class="w-9 h-9 rounded-lg bg-primary-600 flex items-center justify-center text-white font-bold shrink-0">
+                  {{ masjidInitial }}
+                </div>
+                <div class="min-w-0">
+                  <p class="text-sm font-semibold text-[var(--text-primary)] truncate">SiMasjid</p>
+                  <p class="text-xs text-[var(--text-muted)] truncate">{{ masjidName }}</p>
+                </div>
+              </div>
+              <div class="grid grid-cols-4 gap-4 p-4">
+                <Link
+                  v-for="item in moreItems"
+                  :key="item.label"
+                  :href="route(item.route)"
+                  class="flex flex-col items-center gap-1.5 text-xs text-[var(--text-primary)]"
+                  @click="showMore = false"
+                >
+                  <span class="w-11 h-11 rounded-xl bg-[var(--bg-muted)] flex items-center justify-center">
+                    <component :is="item.icon" class="w-5 h-5" />
+                  </span>
+                  {{ item.label }}
+                </Link>
+              </div>
             </DialogPanel>
           </TransitionChild>
         </div>
@@ -53,7 +64,7 @@
 
 <script setup>
 import { computed, ref } from 'vue'
-import { Link } from '@inertiajs/vue3'
+import { Link, usePage } from '@inertiajs/vue3'
 import { Dialog, DialogPanel, TransitionChild, TransitionRoot } from '@headlessui/vue'
 import {
   LayoutDashboard, Wallet, CalendarDays, GraduationCap, MoreHorizontal,
@@ -61,6 +72,10 @@ import {
 } from 'lucide-vue-next'
 
 const showMore = ref(false)
+
+const page = usePage()
+const masjidName = computed(() => page.props.masjid?.name ?? 'Masjid')
+const masjidInitial = computed(() => masjidName.value.charAt(0).toUpperCase())
 
 const allItems = [
   { label: 'Dashboard', route: 'admin.dashboard', icon: LayoutDashboard },
