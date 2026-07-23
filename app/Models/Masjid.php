@@ -11,7 +11,7 @@ class Masjid extends Model
 {
     use HasUuids;
 
-    protected $appends = ['logo_url'];
+    protected $appends = ['logo_url', 'background_url'];
 
     protected $fillable = [
         'name',
@@ -29,6 +29,7 @@ class Masjid extends Model
         'prayer_method',
         'bank_accounts',
         'logo',
+        'background_image',
         'is_active',
     ];
 
@@ -45,6 +46,11 @@ class Masjid extends Model
     protected function logoUrl(): Attribute
     {
         return Attribute::get(fn () => $this->logo ? asset('storage/'.$this->logo) : null);
+    }
+
+    protected function backgroundUrl(): Attribute
+    {
+        return Attribute::get(fn () => $this->background_image ? asset('storage/'.$this->background_image) : null);
     }
 
     public function users(): HasMany

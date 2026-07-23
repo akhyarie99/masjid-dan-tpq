@@ -2,25 +2,43 @@
   <Head :title="masjid.name" />
 
   <PublicLayout>
-    <!-- SECTION 1 — HERO -->
-    <section class="relative bg-gradient-to-b from-emerald-950 to-emerald-900 text-white py-14 md:py-20 px-4">
-      <div class="max-w-4xl mx-auto flex flex-col items-center gap-8">
-        <DigitalClock />
-        <PrayerCountdown :prayer-times="todaySchedule" />
-      </div>
-    </section>
+    <!-- SECTION 1 — HERO FULL SCREEN -->
+    <section
+      class="relative min-h-screen flex flex-col text-white overflow-hidden bg-cover bg-center"
+      :class="masjid.background_url ? '' : 'bg-gradient-to-b from-emerald-950 to-emerald-900'"
+      :style="heroStyle"
+    >
+      <div v-if="masjid.background_url" class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/55 to-emerald-950/90" />
 
-    <!-- SECTION 2 — JADWAL SHALAT HARI INI -->
-    <section class="max-w-6xl mx-auto px-4 md:px-6 -mt-8 md:-mt-10 relative z-10">
-      <div class="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
-        <div
-          v-for="prayer in prayers"
-          :key="prayer.key"
-          class="card p-3 md:p-4 text-center"
-          :class="activePrayer === prayer.key ? 'ring-2 ring-primary-500 animate-pulse' : ''"
-        >
-          <p class="text-xs text-[var(--text-muted)]">{{ prayer.label }}</p>
-          <p class="text-base md:text-lg font-bold text-[var(--text-primary)] tabular-nums mt-1">{{ prayer.time ?? '--:--' }}</p>
+      <div class="relative z-10 flex-1 flex flex-col">
+        <div class="text-center pt-10 md:pt-14 px-4">
+          <img v-if="masjid.logo_url" :src="masjid.logo_url" alt="Logo masjid" class="w-14 h-14 md:w-20 md:h-20 mx-auto mb-3 object-contain" />
+          <h1 class="text-2xl md:text-4xl font-bold tracking-wide text-gold-400">{{ masjid.name }}</h1>
+        </div>
+
+        <div class="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-6 md:py-8">
+          <DigitalClock />
+          <PrayerCountdown :prayer-times="todaySchedule" />
+        </div>
+
+        <div class="max-w-5xl w-full mx-auto px-4 md:px-8 pb-6">
+          <div class="grid grid-cols-3 md:grid-cols-6 gap-2 md:gap-3">
+            <div
+              v-for="prayer in prayers"
+              :key="prayer.key"
+              class="rounded-xl p-3 md:p-4 text-center backdrop-blur-sm transition-all"
+              :class="activePrayer === prayer.key
+                ? 'bg-primary-600 text-white shadow-[0_0_25px_rgba(22,163,74,0.6)]'
+                : 'bg-white/10 text-emerald-50'"
+            >
+              <p class="text-xs opacity-80">{{ prayer.label }}</p>
+              <p class="text-base md:text-lg font-bold tabular-nums mt-1">{{ prayer.time ?? '--:--' }}</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-black/40 backdrop-blur-sm py-2 overflow-hidden border-t border-white/10">
+          <div class="animate-marquee whitespace-nowrap text-emerald-100 text-sm md:text-base">{{ tickerText }}</div>
         </div>
       </div>
     </section>
@@ -186,6 +204,17 @@ const props = defineProps({
 
 const scheduleRef = computed(() => props.todaySchedule)
 const { prayers, activePrayer } = usePrayerTime(scheduleRef)
+
+const heroStyle = computed(() => props.masjid.background_url
+  ? { backgroundImage: `url(${props.masjid.background_url})` }
+  : {})
+
+const tickerText = computed(() => {
+  const items = props.announcements.length > 0
+    ? props.announcements.map((item) => item.title)
+    : ['Selamat datang di ' + props.masjid.name]
+  return items.join('     •     ')
+})
 
 function formatDate(value) {
   return dayjs(value).format('DD MMM YYYY, HH:mm')

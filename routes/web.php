@@ -334,6 +334,8 @@ Route::middleware(['auth'])->group(function () {
             Route::post('masjid', [SettingController::class, 'updateMasjid'])->name('masjid');
             Route::post('masjid/logo', [SettingController::class, 'updateLogo'])->name('masjid.logo');
             Route::delete('masjid/logo', [SettingController::class, 'removeLogo'])->name('masjid.logo.destroy');
+            Route::post('masjid/background', [SettingController::class, 'updateBackground'])->name('masjid.background');
+            Route::delete('masjid/background', [SettingController::class, 'removeBackground'])->name('masjid.background.destroy');
             Route::resource('pengguna', UserController::class)->except(['show']);
             Route::get('log-aktivitas', [AuditLogController::class, 'index'])->name('audit-log');
         });

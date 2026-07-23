@@ -71,4 +71,33 @@ class SettingController extends Controller
 
         return back()->with('success', 'Logo masjid berhasil dihapus.');
     }
+
+    public function updateBackground(Request $request): RedirectResponse
+    {
+        $masjid = $request->user()->masjid;
+
+        $data = $request->validate([
+            'background_image' => ['required', 'image', 'max:5120'],
+        ]);
+
+        if ($masjid->background_image) {
+            Storage::disk('public')->delete($masjid->background_image);
+        }
+
+        $masjid->update(['background_image' => $request->file('background_image')->store('masjid-background', 'public')]);
+
+        return back()->with('success', 'Background landing page berhasil diperbarui.');
+    }
+
+    public function removeBackground(Request $request): RedirectResponse
+    {
+        $masjid = $request->user()->masjid;
+
+        if ($masjid->background_image) {
+            Storage::disk('public')->delete($masjid->background_image);
+            $masjid->update(['background_image' => null]);
+        }
+
+        return back()->with('success', 'Background landing page berhasil dihapus.');
+    }
 }

@@ -41,6 +41,34 @@
       </div>
     </AppCard>
 
+    <AppCard title="Background Landing Page" subtitle="Gambar ini jadi latar belakang penuh layar di halaman utama (landing page) dan jam digital." class="mb-6">
+      <div class="flex flex-col gap-4">
+        <div class="w-full aspect-video max-w-md rounded-xl border border-[var(--border)] bg-[var(--bg-muted)] flex items-center justify-center overflow-hidden">
+          <img v-if="backgroundPreview" :src="backgroundPreview" alt="Background landing page" class="w-full h-full object-cover" />
+          <span v-else class="text-sm text-[var(--text-muted)]">Belum ada background</span>
+        </div>
+        <div>
+          <input ref="backgroundInput" type="file" accept="image/*" class="hidden" @change="onBackgroundSelected" />
+          <div class="flex flex-wrap gap-2">
+            <AppButton type="button" variant="secondary" :loading="backgroundForm.processing" @click="backgroundInput.click()">
+              Pilih Gambar
+            </AppButton>
+            <AppButton
+              v-if="masjid.background_url"
+              type="button"
+              variant="secondary"
+              :loading="removeBackgroundForm.processing"
+              @click="confirmRemoveBackground"
+            >
+              Hapus Background
+            </AppButton>
+          </div>
+          <p class="text-xs text-[var(--text-muted)] mt-2">Format PNG/JPG, maksimal 5MB. Disarankan gambar landscape beresolusi tinggi (mis. 1920x1080).</p>
+          <p v-if="backgroundForm.errors.background_image" class="mt-1 text-xs text-red-500">{{ backgroundForm.errors.background_image }}</p>
+        </div>
+      </div>
+    </AppCard>
+
     <AppCard title="Profil Masjid" subtitle="Informasi ini ditampilkan di portal publik dan digunakan untuk kalkulasi jadwal shalat.">
       <form class="space-y-4" @submit.prevent="submit">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -149,5 +177,38 @@ function onLogoSelected(event) {
 function confirmRemoveLogo() {
   if (!confirm('Hapus logo masjid?')) return
   removeForm.delete(route('admin.settings.masjid.logo.destroy'), { preserveScroll: true })
+}
+
+const backgroundInput = ref(null)
+const backgroundPreviewUrl = ref(null)
+const backgroundPreview = computed(() => backgroundPreviewUrl.value ?? props.masjid.background_url)
+
+const backgroundForm = useForm({ background_image: null })
+const removeBackgroundForm = useForm({})
+
+function onBackgroundSelected(event) {
+  const file = event.target.files?.[0]
+  if (!file) return
+
+  backgroundPreviewUrl.value = URL.createObjectURL(file)
+  backgroundForm.background_image = file
+  backgroundForm.post(route('admin.settings.masjid.background'), {
+    preserveScroll: true,
+    onSuccess: () => {
+      backgroundPreviewUrl.value = null
+      backgroundForm.reset()
+    },
+    onError: () => {
+      backgroundPreviewUrl.value = null
+    },
+    onFinish: () => {
+      backgroundInput.value.value = ''
+    },
+  })
+}
+
+function confirmRemoveBackground() {
+  if (!confirm('Hapus background landing page?')) return
+  removeBackgroundForm.delete(route('admin.settings.masjid.background.destroy'), { preserveScroll: true })
 }
 </script>
