@@ -2,11 +2,20 @@
   <Head :title="`Jam Digital - ${masjid.name}`" />
 
   <div
-    class="min-h-screen flex flex-col bg-cover bg-center"
+    class="relative min-h-screen flex flex-col bg-cover bg-center"
     :class="masjid.background_url ? '' : 'bg-gradient-to-b from-emerald-950 to-slate-950'"
     :style="heroStyle"
   >
     <div v-if="masjid.background_url" class="fixed inset-0 bg-gradient-to-b from-black/70 via-black/55 to-emerald-950/90" />
+
+    <button
+      v-if="!soundEnabled"
+      type="button"
+      class="absolute top-4 right-4 z-20 px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-white text-xs md:text-sm backdrop-blur-sm transition-colors"
+      @click="enableSound"
+    >
+      🔔 Aktifkan Pengingat Suara
+    </button>
 
     <div class="relative z-10 flex-1 flex flex-col">
       <!-- Header: Logo + Nama Masjid -->
@@ -21,6 +30,16 @@
         <div class="text-lg md:text-2xl text-emerald-300">{{ hijriDate }} &nbsp;|&nbsp; {{ miladiDate }}</div>
         <div v-if="nextPrayer" class="text-base md:text-xl text-gold-400 tabular-nums">
           {{ nextPrayer.label }} dalam {{ countdown }}
+        </div>
+        <div
+          v-if="iqomahInfo"
+          class="px-4 py-2 rounded-xl font-bold tabular-nums transition-all"
+          :class="iqomahInfo.isTime
+            ? 'bg-gold-400 text-emerald-950 animate-pulse text-lg md:text-2xl'
+            : 'bg-white/10 text-gold-300 text-sm md:text-base'"
+        >
+          <template v-if="iqomahInfo.isTime">🕌 Waktunya Iqomah — {{ iqomahInfo.prayerLabel }}</template>
+          <template v-else>Iqomah {{ iqomahInfo.prayerLabel }} dalam {{ iqomahInfo.countdown }}</template>
         </div>
       </div>
 
@@ -50,7 +69,7 @@
 </template>
 
 <script setup>
-import { computed } from 'vue'
+import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import moment from 'moment-hijri'
@@ -63,7 +82,50 @@ const props = defineProps({
 })
 
 const scheduleRef = computed(() => props.schedule)
-const { now, prayers, activePrayer, nextPrayer, countdown } = usePrayerTime(scheduleRef)
+const { now, prayers, activePrayer, nextPrayer, countdown, iqomahInfo } = usePrayerTime(
+  scheduleRef,
+  props.masjid.iqomah_offset_minutes ?? 0,
+)
+
+const soundEnabled = ref(false)
+let audioCtx = null
+
+function enableSound() {
+  try {
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)()
+    soundEnabled.value = true
+  } catch {
+    soundEnabled.value = false
+  }
+}
+
+function playIqomahChime() {
+  if (!audioCtx) return
+
+  const beep = (start, freq) => {
+    const osc = audioCtx.createOscillator()
+    const gain = audioCtx.createGain()
+    osc.type = 'sine'
+    osc.frequency.value = freq
+    gain.gain.setValueAtTime(0.0001, audioCtx.currentTime + start)
+    gain.gain.exponentialRampToValueAtTime(0.3, audioCtx.currentTime + start + 0.02)
+    gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + start + 0.4)
+    osc.connect(gain)
+    gain.connect(audioCtx.destination)
+    osc.start(audioCtx.currentTime + start)
+    osc.stop(audioCtx.currentTime + start + 0.45)
+  }
+
+  beep(0, 880)
+  beep(0.5, 880)
+  beep(1, 1046)
+}
+
+watch(() => iqomahInfo.value?.isTime, (isTime, wasTime) => {
+  if (isTime && !wasTime) playIqomahChime()
+})
+
+onBeforeUnmount(() => audioCtx?.close())
 
 const currentTime = computed(() => now.value.format('HH:mm:ss'))
 const miladiDate = computed(() => dayjs(now.value.toDate()).format('dddd, DD MMMM YYYY'))

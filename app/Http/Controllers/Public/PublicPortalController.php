@@ -208,7 +208,7 @@ class PublicPortalController extends Controller
             ->get(['title']);
 
         return Inertia::render('Prayer/DigitalClock', [
-            'masjid' => $masjid->only(['id', 'name', 'logo_url', 'background_url']),
+            'masjid' => $masjid->only(['id', 'name', 'logo_url', 'background_url', 'iqomah_offset_minutes']),
             'schedule' => $todaySchedule,
             'tickerItems' => $announcements->pluck('title'),
         ]);

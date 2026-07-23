@@ -18,7 +18,7 @@
 
         <div class="flex-1 flex flex-col items-center justify-center gap-6 px-4 py-6 md:py-8">
           <DigitalClock />
-          <PrayerCountdown :prayer-times="todaySchedule" />
+          <PrayerCountdown :prayer-times="todaySchedule" :iqomah-offset-minutes="masjid.iqomah_offset_minutes ?? 0" />
         </div>
 
         <div class="max-w-5xl w-full mx-auto px-4 md:px-8 pb-6">

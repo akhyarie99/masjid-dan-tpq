@@ -27,6 +27,7 @@ class Masjid extends Model
         'vision',
         'mission',
         'prayer_method',
+        'iqomah_offset_minutes',
         'bank_accounts',
         'logo',
         'background_image',
@@ -40,6 +41,7 @@ class Masjid extends Model
             'longitude' => 'decimal:7',
             'bank_accounts' => 'array',
             'is_active' => 'boolean',
+            'iqomah_offset_minutes' => 'integer',
         ];
     }
 

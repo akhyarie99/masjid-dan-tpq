@@ -81,6 +81,18 @@
           />
         </div>
 
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <AppInput
+            v-model="form.iqomah_offset_minutes"
+            type="number"
+            min="0"
+            max="60"
+            label="Jeda Iqomah (menit)"
+            hint="Jarak waktu dari adzan ke iqomah, dipakai untuk pengingat di jam digital & landing page."
+            :error="form.errors.iqomah_offset_minutes"
+          />
+        </div>
+
         <div>
           <label class="block text-sm font-medium text-[var(--text-primary)] mb-1">Alamat</label>
           <textarea v-model="form.address" rows="3" class="input" required />
@@ -138,6 +150,7 @@ const form = useForm({
   vision: props.masjid.vision,
   mission: props.masjid.mission,
   prayer_method: props.masjid.prayer_method,
+  iqomah_offset_minutes: props.masjid.iqomah_offset_minutes,
 })
 
 function submit() {

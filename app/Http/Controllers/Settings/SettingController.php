@@ -36,6 +36,7 @@ class SettingController extends Controller
             'vision' => ['nullable', 'string'],
             'mission' => ['nullable', 'string'],
             'prayer_method' => ['required', 'in:kemenag,mwl,isna'],
+            'iqomah_offset_minutes' => ['required', 'integer', 'min:0', 'max:60'],
         ]);
 
         $masjid->update($data);
