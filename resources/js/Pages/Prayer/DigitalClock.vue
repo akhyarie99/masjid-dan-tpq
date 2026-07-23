@@ -72,7 +72,7 @@
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
 import { Head } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
-import moment from 'moment-hijri'
+import { formatHijriDate } from '@/composables/useHijriDate'
 import { usePrayerTime } from '@/composables/usePrayerTime'
 
 const props = defineProps({
@@ -129,7 +129,7 @@ onBeforeUnmount(() => audioCtx?.close())
 
 const currentTime = computed(() => now.value.format('HH:mm:ss'))
 const miladiDate = computed(() => dayjs(now.value.toDate()).format('dddd, DD MMMM YYYY'))
-const hijriDate = computed(() => moment(now.value.toDate()).format('iD iMMMM iYYYY') + ' H')
+const hijriDate = computed(() => formatHijriDate(now.value.toDate()))
 
 const heroStyle = computed(() => props.masjid.background_url
   ? { backgroundImage: `url(${props.masjid.background_url})` }

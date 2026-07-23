@@ -6,6 +6,10 @@ import { createInertiaApp } from '@inertiajs/vue3';
 import { resolvePageComponent } from 'laravel-vite-plugin/inertia-helpers';
 import { createPinia } from 'pinia';
 import { ZiggyVue } from '../../vendor/tightenco/ziggy';
+import dayjs from 'dayjs';
+import 'dayjs/locale/id';
+
+dayjs.locale('id');
 
 const appName = import.meta.env.VITE_APP_NAME || 'SiMasjid';
 

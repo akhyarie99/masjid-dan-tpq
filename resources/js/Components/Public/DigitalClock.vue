@@ -7,7 +7,8 @@
 
 <script setup>
 import { onMounted, onUnmounted, ref } from 'vue'
-import moment from 'moment-hijri'
+import dayjs from 'dayjs'
+import { formatHijriDate } from '@/composables/useHijriDate'
 
 const time = ref('')
 const hijriDate = ref('')
@@ -16,10 +17,10 @@ const miladiDate = ref('')
 let timer
 
 function tick() {
-  const now = moment()
+  const now = dayjs()
   time.value = now.format('HH:mm:ss')
   miladiDate.value = now.format('dddd, DD MMMM YYYY')
-  hijriDate.value = now.format('iD iMMMM iYYYY') + ' H'
+  hijriDate.value = formatHijriDate(now.toDate())
 }
 
 onMounted(() => {
