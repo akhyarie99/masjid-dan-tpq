@@ -93,6 +93,9 @@ Route::prefix('wali')->name('wali.')->group(function () {
         Route::get('/dashboard', [WaliController::class, 'dashboard'])->name('dashboard');
         Route::get('/raport/{reportCard}', [WaliController::class, 'reportCard'])->name('reportcard');
         Route::get('/raport/{reportCard}/pdf', [WaliController::class, 'reportCardPdf'])->name('reportcard.pdf');
+        Route::post('/notifikasi', [WaliController::class, 'updateNotificationPreferences'])->name('notifications.update');
+        Route::post('/push-subscribe', [WaliController::class, 'pushSubscribe'])->name('push.subscribe');
+        Route::post('/push-unsubscribe', [WaliController::class, 'pushUnsubscribe'])->name('push.unsubscribe');
     });
 });
 

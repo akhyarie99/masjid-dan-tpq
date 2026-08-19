@@ -52,4 +52,12 @@ return [
         'credentials' => env('FIREBASE_CREDENTIALS'),
     ],
 
+    'vapid' => [
+        // Generate sekali dengan: php artisan tpq:generate-vapid-keys
+        // Sebelum diisi, WebPushService no-op secara aman (lihat app/Services/WebPushService.php).
+        'public_key' => env('VAPID_PUBLIC_KEY'),
+        'private_key' => env('VAPID_PRIVATE_KEY'),
+        'subject' => env('VAPID_SUBJECT', env('APP_URL', 'http://localhost')),
+    ],
+
 ];

@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\TpqSppBill;
-use App\Services\WhatsAppService;
+use App\Services\GuardianNotifier;
 use Illuminate\Console\Command;
 use Illuminate\Support\Carbon;
 
@@ -11,9 +11,9 @@ class SendSppReminders extends Command
 {
     protected $signature = 'tpq:spp-reminders';
 
-    protected $description = 'Kirim reminder WA untuk tagihan SPP yang sudah lewat 7 hari dan belum terbayar';
+    protected $description = 'Kirim reminder WA/push untuk tagihan SPP yang sudah lewat 7 hari dan belum terbayar';
 
-    public function handle(WhatsAppService $whatsAppService): int
+    public function handle(GuardianNotifier $notifier): int
     {
         $bills = TpqSppBill::with('student')
             ->whereIn('status', ['unpaid', 'partial'])
@@ -24,7 +24,7 @@ class SendSppReminders extends Command
         $sent = 0;
 
         foreach ($bills as $bill) {
-            if (empty($bill->student->guardian_whatsapp)) {
+            if (! $bill->student || (! $bill->student->notify_whatsapp && ! $bill->student->notify_webpush)) {
                 continue;
             }
 
@@ -35,10 +35,9 @@ class SendSppReminders extends Command
                 ."SPP TPQ bulan {$monthName} sebesar Rp".number_format($sisa, 0, ',', '.')." belum terbayar.\n\n"
                 ."Jazakumullahu khairan.";
 
-            if ($whatsAppService->send($bill->student->guardian_whatsapp, $message)) {
-                $bill->update(['reminder_sent' => true]);
-                $sent++;
-            }
+            $notifier->notify($bill->student, $message, 'Reminder SPP', '/wali/dashboard');
+            $bill->update(['reminder_sent' => true]);
+            $sent++;
         }
 
         $this->info("Reminder SPP terkirim ke {$sent} wali murid.");

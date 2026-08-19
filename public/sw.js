@@ -52,3 +52,38 @@ self.addEventListener('fetch', (event) => {
         );
     }
 });
+
+// Notifikasi push untuk wali murid (progres mengaji, reminder SPP, dll).
+self.addEventListener('push', (event) => {
+    let payload = { title: 'SiMasjid', body: '', url: '/wali/dashboard' };
+
+    if (event.data) {
+        try {
+            payload = { ...payload, ...event.data.json() };
+        } catch {
+            payload.body = event.data.text();
+        }
+    }
+
+    event.waitUntil(
+        self.registration.showNotification(payload.title, {
+            body: payload.body,
+            icon: '/icons/icon.svg',
+            badge: '/icons/icon.svg',
+            data: { url: payload.url },
+        })
+    );
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const url = event.notification.data?.url || '/wali/dashboard';
+
+    event.waitUntil(
+        self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
+            const existing = clients.find((client) => client.url.includes(url));
+            if (existing) return existing.focus();
+            return self.clients.openWindow(url);
+        })
+    );
+});
