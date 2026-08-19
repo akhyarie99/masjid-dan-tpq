@@ -6,8 +6,10 @@ use App\Http\Controllers\Controller;
 use App\Models\TpqAcademicYear;
 use App\Models\TpqClass;
 use App\Models\TpqDailyProgress;
+use App\Models\TpqStudent;
 use App\Models\TpqStudentClass;
 use App\Services\GuardianNotifier;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -15,9 +17,115 @@ use Inertia\Response;
 
 class TpqDailyProgressController extends Controller
 {
+    /**
+     * Landing page baru: scan QR atau cari nama santri, bukan daftar panjang
+     * sekaligus — dengan ratusan santri, scroll-cari-nama itu sendiri yang lambat.
+     */
     public function index(Request $request): Response
     {
         return Inertia::render('Learning/Tpq/DailyProgress/Index', [
+            'date' => $request->string('date')->toString() ?: now()->toDateString(),
+        ]);
+    }
+
+    public function search(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->string('q'));
+
+        if ($query === '') {
+            return response()->json(['students' => []]);
+        }
+
+        $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
+
+        $students = TpqStudent::where('masjid_id', $request->user()->masjid_id)
+            ->where('status', 'aktif')
+            ->where(fn ($q) => $q->where('name', 'like', "%{$query}%")->orWhere('nis', 'like', "%{$query}%"))
+            ->with(['studentClasses' => fn ($q) => $q->where('academic_year_id', $activeYear?->id)->with('class:id,name')])
+            ->limit(10)
+            ->get()
+            ->map(fn (TpqStudent $s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'nis' => $s->nis,
+                'photo' => $s->photo,
+                'class' => $s->studentClasses->first()?->class?->name,
+            ]);
+
+        return response()->json(['students' => $students]);
+    }
+
+    /**
+     * Dituju setelah scan QR (isi QR di kartu santri = student id, lihat
+     * TpqStudentController::card) atau klik hasil pencarian nama.
+     */
+    public function showStudent(Request $request, TpqStudent $student): Response
+    {
+        abort_unless($student->masjid_id === $request->user()->masjid_id, 404);
+
+        $date = $request->string('date')->toString() ?: now()->toDateString();
+        $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
+
+        $classData = TpqStudentClass::with('class:id,name')
+            ->where('student_id', $student->id)
+            ->where('academic_year_id', $activeYear?->id)
+            ->first();
+
+        $todayEntry = TpqDailyProgress::where('student_id', $student->id)->whereDate('date', $date)->first();
+        $lastEntry = $todayEntry ?? TpqDailyProgress::where('student_id', $student->id)
+            ->whereDate('date', '<', $date)
+            ->orderByDesc('date')
+            ->first();
+
+        return Inertia::render('Learning/Tpq/DailyProgress/InputSantri', [
+            'date' => $date,
+            'student' => [
+                'id' => $student->id,
+                'name' => $student->name,
+                'nis' => $student->nis,
+                'photo' => $student->photo,
+                'class' => $classData?->class?->name,
+                'class_id' => $classData?->class_id,
+                'filled' => (bool) $todayEntry,
+                'method' => $lastEntry?->method ?? 'iqro',
+                'jilid' => $lastEntry?->jilid,
+                'halaman' => $todayEntry?->halaman ?? $lastEntry?->halaman,
+                'surah' => $lastEntry?->surah,
+                'ayat_awal' => $todayEntry?->ayat_awal,
+                'ayat_akhir' => $todayEntry?->ayat_akhir,
+                'keterangan' => $todayEntry?->keterangan ?? 'lancar',
+                'catatan' => $todayEntry?->catatan,
+            ],
+        ]);
+    }
+
+    public function storeStudent(Request $request, TpqStudent $student, GuardianNotifier $notifier): RedirectResponse
+    {
+        abort_unless($student->masjid_id === $request->user()->masjid_id, 404);
+
+        $data = $request->validate([
+            'date' => ['required', 'date'],
+            'class_id' => ['nullable', 'uuid', 'exists:tpq_classes,id'],
+            'method' => ['required', 'in:iqro,quran'],
+            'jilid' => ['nullable', 'integer', 'min:1', 'max:6', 'required_if:method,iqro'],
+            'halaman' => ['nullable', 'integer', 'min:1'],
+            'surah' => ['nullable', 'string', 'max:255', 'required_if:method,quran'],
+            'ayat_awal' => ['nullable', 'integer', 'min:1'],
+            'ayat_akhir' => ['nullable', 'integer', 'min:1'],
+            'keterangan' => ['required', 'in:lancar,ulang'],
+            'catatan' => ['nullable', 'string'],
+        ]);
+
+        $this->saveEntry($student, $data, $request->user()->id, $notifier);
+
+        return back()->with('success', "Progres mengaji {$student->name} tersimpan, wali sudah diberi tahu.");
+    }
+
+    // === Alur lama: pilih kelas, isi sekaligus satu kelas (dipertahankan untuk rekap/kelas kecil) ===
+
+    public function kelasIndex(Request $request): Response
+    {
+        return Inertia::render('Learning/Tpq/DailyProgress/KelasIndex', [
             'classes' => TpqClass::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->orderBy('order')->get(['id', 'name']),
         ]);
     }
@@ -90,38 +198,47 @@ class TpqDailyProgressController extends Controller
         ]);
 
         foreach ($data['entries'] as $item) {
-            $isNew = ! TpqDailyProgress::where('student_id', $item['student_id'])
-                ->whereDate('date', $data['date'])
-                ->exists();
-
-            $values = [
-                'class_id' => $class->id,
-                'method' => $item['method'],
-                'jilid' => $item['method'] === 'iqro' ? ($item['jilid'] ?? null) : null,
-                'halaman' => $item['halaman'] ?? null,
-                'surah' => $item['method'] === 'quran' ? ($item['surah'] ?? null) : null,
-                'ayat_awal' => $item['method'] === 'quran' ? ($item['ayat_awal'] ?? null) : null,
-                'ayat_akhir' => $item['method'] === 'quran' ? ($item['ayat_akhir'] ?? null) : null,
-                'keterangan' => $item['keterangan'],
-                'catatan' => $item['catatan'] ?? null,
-                'recorded_by' => $request->user()->id,
-            ];
-
-            $progress = TpqDailyProgress::updateOrCreate(
-                ['student_id' => $item['student_id'], 'date' => $data['date']],
-                $values,
-            );
-
-            if ($isNew) {
-                $progress->loadMissing('student');
-                $notifier->notify(
-                    $progress->student,
-                    "Assalamu'alaikum, Ananda {$progress->student->name} hari ini mengaji: {$progress->summary()} ({$progress->keterangan}). Barakallahu fiik."
-                );
-                $progress->update(['notified_at' => now()]);
+            $student = TpqStudent::find($item['student_id']);
+            if (! $student) {
+                continue;
             }
+
+            $this->saveEntry($student, [...$item, 'date' => $data['date'], 'class_id' => $class->id], $request->user()->id, $notifier);
         }
 
         return back()->with('success', 'Progres mengaji harian berhasil disimpan.');
+    }
+
+    private function saveEntry(TpqStudent $student, array $data, string $recordedBy, GuardianNotifier $notifier): TpqDailyProgress
+    {
+        $isNew = ! TpqDailyProgress::where('student_id', $student->id)
+            ->whereDate('date', $data['date'])
+            ->exists();
+
+        $progress = TpqDailyProgress::updateOrCreate(
+            ['student_id' => $student->id, 'date' => $data['date']],
+            [
+                'class_id' => $data['class_id'] ?? null,
+                'method' => $data['method'],
+                'jilid' => $data['method'] === 'iqro' ? ($data['jilid'] ?? null) : null,
+                'halaman' => $data['halaman'] ?? null,
+                'surah' => $data['method'] === 'quran' ? ($data['surah'] ?? null) : null,
+                'ayat_awal' => $data['method'] === 'quran' ? ($data['ayat_awal'] ?? null) : null,
+                'ayat_akhir' => $data['method'] === 'quran' ? ($data['ayat_akhir'] ?? null) : null,
+                'keterangan' => $data['keterangan'],
+                'catatan' => $data['catatan'] ?? null,
+                'recorded_by' => $recordedBy,
+            ],
+        );
+
+        if ($isNew) {
+            $notifier->notify(
+                $student,
+                "Assalamu'alaikum, Ananda {$student->name} hari ini mengaji: {$progress->summary()} ({$progress->keterangan}). Barakallahu fiik."
+            );
+            $progress->update(['notified_at' => now()]);
+        }
+
+        return $progress;
     }
 }

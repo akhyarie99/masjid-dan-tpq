@@ -219,8 +219,12 @@ Route::middleware(['auth'])->group(function () {
 
             Route::prefix('harian')->name('daily-progress.')->group(function () {
                 Route::get('/', [TpqDailyProgressController::class, 'index'])->name('index');
-                Route::get('{class}', [TpqDailyProgressController::class, 'show'])->name('show');
-                Route::post('{class}', [TpqDailyProgressController::class, 'store'])->name('store');
+                Route::get('cari', [TpqDailyProgressController::class, 'search'])->name('search');
+                Route::get('santri/{student}', [TpqDailyProgressController::class, 'showStudent'])->name('santri');
+                Route::post('santri/{student}', [TpqDailyProgressController::class, 'storeStudent'])->name('santri.store');
+                Route::get('kelas', [TpqDailyProgressController::class, 'kelasIndex'])->name('kelas.index');
+                Route::get('kelas/{class}', [TpqDailyProgressController::class, 'show'])->name('show');
+                Route::post('kelas/{class}', [TpqDailyProgressController::class, 'store'])->name('store');
             });
 
             Route::prefix('hafalan')->name('hafalan.')->group(function () {
