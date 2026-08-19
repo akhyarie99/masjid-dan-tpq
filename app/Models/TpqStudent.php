@@ -27,7 +27,7 @@ class TpqStudent extends Model
         // yang membuat/mengubah santri) supaya akun wali tidak pernah ketinggalan
         // saat guardian_phone diisi/diganti, dari jalur manapun.
         static::saved(function (self $student) {
-            if ($student->wasRecentlyCreated || $student->wasChanged('guardian_phone')) {
+            if ($student->wasRecentlyCreated || $student->wasChanged(['guardian_phone', 'guardian_email'])) {
                 WaliAccount::syncForStudent($student);
             }
         });
@@ -48,6 +48,7 @@ class TpqStudent extends Model
         'guardian_name',
         'guardian_phone',
         'guardian_whatsapp',
+        'guardian_email',
         'notify_whatsapp',
         'notify_webpush',
         'guardian_password',

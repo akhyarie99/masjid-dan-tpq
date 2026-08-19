@@ -2,14 +2,19 @@
 
 namespace App\Http\Controllers;
 
+use App\Jobs\SendWhatsAppNotification;
+use App\Mail\WaliResetPasswordMail;
 use App\Models\TpqDailyProgress;
 use App\Models\TpqGuardianPushSubscription;
 use App\Models\TpqReportCard;
 use App\Models\TpqStudent;
 use App\Models\WaliAccount;
+use App\Models\WaliPasswordResetToken;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
@@ -28,7 +33,7 @@ class WaliController extends Controller
      * generik "SiMasjid" — dan start_url langsung ke dashboard wali, bukan
      * landing page publik.
      */
-    public function manifest(Request $request): \Illuminate\Http\JsonResponse
+    public function manifest(Request $request): JsonResponse
     {
         $account = $this->currentAccount($request);
         $masjid = $account->students()->first()?->masjid;
@@ -72,6 +77,98 @@ class WaliController extends Controller
         $request->session()->regenerate();
 
         return redirect()->route('wali.dashboard');
+    }
+
+    public function showForgotPassword(): Response
+    {
+        return Inertia::render('Wali/ForgotPassword');
+    }
+
+    /**
+     * Langkah 1: cek nomor HP-nya terdaftar & channel apa saja yang bisa dipakai
+     * (WA belum tentu aktif — tidak semua nomor yang didaftarkan itu WhatsApp),
+     * supaya wali bisa pilih sendiri mau dikirim ke mana.
+     */
+    public function findAccountForReset(Request $request): JsonResponse
+    {
+        $data = $request->validate(['phone' => ['required', 'string']]);
+
+        $account = WaliAccount::where('phone', $data['phone'])->first();
+
+        if (! $account) {
+            return response()->json(['found' => false]);
+        }
+
+        return response()->json([
+            'found' => true,
+            'whatsapp' => $account->maskedPhone(),
+            'email' => $account->maskedEmail(),
+        ]);
+    }
+
+    public function sendResetLink(Request $request): JsonResponse
+    {
+        $data = $request->validate([
+            'phone' => ['required', 'string'],
+            'channel' => ['required', 'in:whatsapp,email'],
+        ]);
+
+        $account = WaliAccount::where('phone', $data['phone'])->first();
+
+        if (! $account || ($data['channel'] === 'email' && ! $account->email)) {
+            return response()->json(['message' => 'Tidak bisa mengirim link reset. Coba lagi atau hubungi pengurus TPQ.'], 422);
+        }
+
+        $plainToken = WaliPasswordResetToken::createFor($account);
+        $resetUrl = route('wali.reset-password.show', ['token' => $plainToken, 'account' => $account->id]);
+
+        if ($data['channel'] === 'whatsapp') {
+            SendWhatsAppNotification::dispatch(
+                $account->phone,
+                "Assalamu'alaikum, ada permintaan reset password Portal Wali. Klik link ini untuk buat password baru (berlaku 15 menit):\n{$resetUrl}\n\nAbaikan pesan ini kalau bukan Anda yang meminta."
+            );
+        } else {
+            Mail::to($account->email)->send(new WaliResetPasswordMail($account, $resetUrl));
+        }
+
+        return response()->json(['message' => 'Link terkirim.']);
+    }
+
+    public function showResetPassword(Request $request, string $token): Response
+    {
+        $account = WaliAccount::find($request->query('account'));
+        $valid = $account && WaliPasswordResetToken::verify($account, $token);
+
+        return Inertia::render('Wali/ResetPassword', [
+            'valid' => $valid,
+            'token' => $token,
+            'account' => $account?->id,
+        ]);
+    }
+
+    public function resetPassword(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'account' => ['required', 'uuid'],
+            'token' => ['required', 'string'],
+            'password' => ['required', 'string', 'min:6', 'confirmed'],
+        ]);
+
+        $account = WaliAccount::find($data['account']);
+
+        if (! $account || ! WaliPasswordResetToken::verify($account, $data['token'])) {
+            throw ValidationException::withMessages([
+                'password' => 'Link reset sudah kedaluwarsa atau tidak valid. Minta link baru.',
+            ]);
+        }
+
+        $account->update(['password' => $data['password']]);
+        WaliPasswordResetToken::invalidateFor($account);
+
+        $request->session()->put('wali_account_id', $account->id);
+        $request->session()->regenerate();
+
+        return redirect()->route('wali.dashboard')->with('success', 'Password berhasil diperbarui.');
     }
 
     public function logout(Request $request): RedirectResponse

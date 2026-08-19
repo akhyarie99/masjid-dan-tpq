@@ -89,6 +89,15 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 Route::prefix('wali')->name('wali.')->group(function () {
     Route::get('/login', [WaliController::class, 'showLogin'])->name('login');
     Route::post('/login', [WaliController::class, 'login']);
+
+    Route::get('/lupa-password', [WaliController::class, 'showForgotPassword'])->name('forgot-password');
+    Route::middleware('throttle:6,1')->group(function () {
+        Route::post('/lupa-password/cari', [WaliController::class, 'findAccountForReset'])->name('forgot-password.find');
+        Route::post('/lupa-password/kirim', [WaliController::class, 'sendResetLink'])->name('forgot-password.send');
+    });
+    Route::get('/reset-password/{token}', [WaliController::class, 'showResetPassword'])->name('reset-password.show');
+    Route::post('/reset-password', [WaliController::class, 'resetPassword'])->name('reset-password.store');
+
     Route::middleware('auth.wali')->group(function () {
         Route::post('/logout', [WaliController::class, 'logout'])->name('logout');
         Route::get('/dashboard', [WaliController::class, 'dashboard'])->name('dashboard');

@@ -15,15 +15,18 @@
         <AppButton type="submit" class="w-full justify-center" :loading="form.processing">Masuk</AppButton>
       </div>
 
-      <p class="text-xs text-[var(--text-muted)] text-center mt-4">
-        Kata sandi default adalah Nomor Induk Santri (NIS). Hubungi pengurus TPQ jika lupa.
+      <p class="text-xs text-center mt-4">
+        <Link :href="route('wali.forgot-password')" class="text-primary-600 hover:underline">Lupa password?</Link>
+      </p>
+      <p class="text-xs text-[var(--text-muted)] text-center mt-2">
+        Kata sandi default adalah Nomor Induk Santri (NIS).
       </p>
     </form>
   </div>
 </template>
 
 <script setup>
-import { Head, useForm } from '@inertiajs/vue3'
+import { Head, Link, useForm } from '@inertiajs/vue3'
 import AppInput from '@/Components/UI/AppInput.vue'
 import AppButton from '@/Components/UI/AppButton.vue'
 

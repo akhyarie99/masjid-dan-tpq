@@ -43,6 +43,14 @@
           <AppInput v-model="form.guardian_whatsapp" label="No. WhatsApp Wali" :error="form.errors.guardian_whatsapp" />
         </div>
 
+        <AppInput
+          v-model="form.guardian_email"
+          type="email"
+          label="Email Wali (opsional)"
+          hint="Cadangan untuk lupa password kalau nomor HP di atas bukan nomor WhatsApp aktif."
+          :error="form.errors.guardian_email"
+        />
+
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <AppSelect v-model="form.status" label="Status" required :options="[{ label: 'Aktif', value: 'aktif' }, { label: 'Cuti', value: 'cuti' }, { label: 'Lulus', value: 'lulus' }, { label: 'Keluar', value: 'keluar' }]" :error="form.errors.status" />
           <AppInput v-model="form.entry_date" type="date" label="Tanggal Masuk" required :error="form.errors.entry_date" />
@@ -90,6 +98,7 @@ const form = useForm({
   parent_occupation: props.student?.parent_occupation ?? '',
   guardian_phone: props.student?.guardian_phone ?? '',
   guardian_whatsapp: props.student?.guardian_whatsapp ?? '',
+  guardian_email: props.student?.guardian_email ?? '',
   status: props.student?.status ?? 'aktif',
   entry_date: props.student?.entry_date ?? new Date().toISOString().slice(0, 10),
 })

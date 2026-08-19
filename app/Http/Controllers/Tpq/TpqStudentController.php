@@ -204,6 +204,7 @@ class TpqStudentController extends Controller
             'guardian_name' => ['nullable', 'string', 'max:255'],
             'guardian_phone' => ['required', 'string', 'max:30'],
             'guardian_whatsapp' => ['nullable', 'string', 'max:30'],
+            'guardian_email' => ['nullable', 'email', 'max:255'],
             'parent_occupation' => ['nullable', 'string', 'max:255'],
             'status' => ['required', 'in:aktif,cuti,lulus,keluar'],
             'entry_date' => ['required', 'date'],
