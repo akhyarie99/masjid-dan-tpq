@@ -38,6 +38,7 @@
                   <Link :href="route('admin.tpq.santri.edit', student.id)" class="text-primary-600 text-sm hover:underline">Edit</Link>
                   <Link :href="route('admin.tpq.hafalan.show', student.id)" class="text-primary-600 text-sm hover:underline">Hafalan</Link>
                   <a :href="route('admin.tpq.santri.card', student.id)" target="_blank" class="text-primary-600 text-sm hover:underline">Kartu</a>
+                  <button type="button" class="text-primary-600 text-sm hover:underline" @click="resetWaliPassword(student)">Reset Password Wali</button>
                 </div>
               </td>
             </tr>
@@ -116,5 +117,10 @@ function statusLabel(status) {
 
 function statusVariant(status) {
   return { aktif: 'green', cuti: 'yellow', lulus: 'blue', keluar: 'gray' }[status] ?? 'gray'
+}
+
+function resetWaliPassword(student) {
+  if (!confirm(`Reset password wali ${student.name} ke NIS (${student.nis})? Beri tahu password baru ini ke wali santri.`)) return
+  router.post(route('admin.tpq.santri.reset-wali-password', student.id), {}, { preserveScroll: true })
 }
 </script>

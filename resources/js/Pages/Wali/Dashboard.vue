@@ -33,13 +33,16 @@
             type="button"
             class="w-11 h-6 rounded-full transition-colors relative shrink-0 disabled:opacity-50"
             :class="notifyWebpushLocal ? 'bg-primary-600' : 'bg-[var(--bg-muted)]'"
-            :disabled="pushBusy || !pushSupported"
+            :disabled="pushBusy || !canUsePush"
             @click="togglePush"
           >
             <span class="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all" :class="notifyWebpushLocal ? 'left-[22px]' : 'left-0.5'" />
           </button>
         </div>
         <p v-if="!pushSupported" class="text-xs text-yellow-600">Browser ini tidak mendukung notifikasi push.</p>
+        <p v-else-if="isIosNotInstalled" class="text-xs text-yellow-600">
+          Di iPhone, notifikasi push hanya bisa aktif setelah aplikasi ini dipasang ke Layar Utama — lihat panduan di atas.
+        </p>
       </div>
     </div>
 
@@ -89,8 +92,16 @@ const notifyWebpushLocal = ref(props.notifyWebpush)
 const pushBusy = ref(false)
 const pushSupported = 'serviceWorker' in navigator && 'PushManager' in window
 
+const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase()) && !window.MSStream
+const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone === true
+// iOS Safari hanya mengizinkan subscribe push kalau dibuka dari ikon Layar Utama
+// (mode standalone) — dari tab Safari biasa, permintaan izin notifikasi akan gagal.
+const isIosNotInstalled = isIos && !isStandalone
+const canUsePush = pushSupported && !isIosNotInstalled
+
 const pushStatusLabel = computed(() => {
   if (!pushSupported) return 'Tidak didukung di browser ini.'
+  if (isIosNotInstalled) return 'Pasang aplikasi ini dulu ke Layar Utama.'
   if (pushBusy.value) return 'Memproses...'
   return notifyWebpushLocal.value ? 'Aktif di browser ini.' : 'Nonaktif — aktifkan untuk terima notifikasi langsung di browser.'
 })
@@ -115,7 +126,7 @@ function urlBase64ToUint8Array(base64String) {
 }
 
 async function togglePush() {
-  if (!pushSupported || pushBusy.value) return
+  if (!canUsePush || pushBusy.value) return
 
   pushBusy.value = true
   try {

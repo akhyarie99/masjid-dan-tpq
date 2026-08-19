@@ -8,6 +8,7 @@ use App\Models\TpqAcademicYear;
 use App\Models\TpqClass;
 use App\Models\TpqStudent;
 use App\Models\TpqStudentClass;
+use App\Models\WaliAccount;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Response;
@@ -114,6 +115,28 @@ class TpqStudentController extends Controller
         $santri->delete();
 
         return back()->with('success', 'Santri berhasil dihapus.');
+    }
+
+    /**
+     * Wali tidak bisa lihat/ganti password sendiri (belum ada fitur lupa password
+     * di portal wali) — ini satu-satunya jalan reset kalau wali lupa: kembalikan
+     * ke NIS santri, konvensi yang sama dipakai saat akun pertama kali dibuat.
+     */
+    public function resetWaliPassword(TpqStudent $santri): RedirectResponse
+    {
+        if (! $santri->guardian_phone) {
+            return back()->with('error', 'Santri ini belum punya nomor HP wali.');
+        }
+
+        $account = WaliAccount::where('phone', $santri->guardian_phone)->first();
+
+        if (! $account) {
+            return back()->with('error', 'Akun wali untuk nomor ini belum ada.');
+        }
+
+        $account->update(['password' => $santri->nis]);
+
+        return back()->with('success', "Password wali direset ke NIS ({$santri->nis}).");
     }
 
     public function card(TpqStudent $student): InertiaResponse

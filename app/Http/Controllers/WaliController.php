@@ -22,6 +22,37 @@ class WaliController extends Controller
         return Inertia::render('Wali/Login');
     }
 
+    /**
+     * Manifest khusus portal wali (beda dari manifest.json umum) supaya ikon &
+     * nama yang muncul saat "Add to Home Screen" itu identitas masjidnya, bukan
+     * generik "SiMasjid" — dan start_url langsung ke dashboard wali, bukan
+     * landing page publik.
+     */
+    public function manifest(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $account = $this->currentAccount($request);
+        $masjid = $account->students()->first()?->masjid;
+
+        return response()->json([
+            'name' => 'Portal Wali'.($masjid ? " - {$masjid->name}" : ''),
+            'short_name' => 'Portal Wali',
+            'start_url' => '/wali/dashboard',
+            'scope' => '/wali',
+            'display' => 'standalone',
+            'background_color' => '#ffffff',
+            'theme_color' => '#16a34a',
+            'lang' => 'id',
+            'icons' => [
+                [
+                    'src' => $masjid?->logo_url ?? '/icons/icon.svg',
+                    'sizes' => $masjid?->logo_url ? '512x512' : 'any',
+                    'type' => $masjid?->logo_url ? 'image/png' : 'image/svg+xml',
+                    'purpose' => 'any maskable',
+                ],
+            ],
+        ])->header('Content-Type', 'application/manifest+json');
+    }
+
     public function login(Request $request): RedirectResponse
     {
         $credentials = $request->validate([

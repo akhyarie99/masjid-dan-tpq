@@ -53,7 +53,11 @@ class WebPushService
                         'endpoint' => $record->endpoint,
                         'publicKey' => $record->public_key,
                         'authToken' => $record->auth_token,
-                        'contentEncoding' => $record->content_encoding ?? 'aesgcm',
+                        // Safari HANYA mendukung aes128gcm (standar final RFC8291) — aesgcm
+                        // (lama) yang jadi default library ini akan gagal total di iOS/macOS
+                        // Safari. Chrome & Firefox modern juga sudah dukung aes128gcm, jadi
+                        // aman dipakai seragam tanpa perlu deteksi per-browser.
+                        'contentEncoding' => $record->content_encoding ?? 'aes128gcm',
                     ]),
                     $payload,
                 );

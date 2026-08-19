@@ -14,6 +14,7 @@
     </header>
 
     <main class="flex-1 p-4 md:p-6">
+      <InstallAppPrompt />
       <slot />
     </main>
   </div>
@@ -22,4 +23,5 @@
 <script setup>
 import { Link } from '@inertiajs/vue3'
 import ThemeToggle from '@/Components/Shared/ThemeToggle.vue'
+import InstallAppPrompt from '@/Components/Wali/InstallAppPrompt.vue'
 </script>

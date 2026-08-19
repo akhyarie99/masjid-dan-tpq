@@ -92,6 +92,7 @@ Route::prefix('wali')->name('wali.')->group(function () {
     Route::middleware('auth.wali')->group(function () {
         Route::post('/logout', [WaliController::class, 'logout'])->name('logout');
         Route::get('/dashboard', [WaliController::class, 'dashboard'])->name('dashboard');
+        Route::get('/manifest.webmanifest', [WaliController::class, 'manifest'])->name('manifest');
         Route::get('/santri/{student}', [WaliController::class, 'studentDetail'])->name('santri');
         Route::get('/raport/{reportCard}', [WaliController::class, 'reportCard'])->name('reportcard');
         Route::get('/raport/{reportCard}/pdf', [WaliController::class, 'reportCardPdf'])->name('reportcard.pdf');
@@ -204,6 +205,7 @@ Route::middleware(['auth'])->group(function () {
             Route::get('santri/{student}/kartu', [TpqStudentController::class, 'card'])->name('santri.card');
             Route::get('santri/import/template', [TpqStudentController::class, 'importTemplate'])->name('santri.import-template');
             Route::post('santri/import', [TpqStudentController::class, 'import'])->name('santri.import');
+            Route::post('santri/{santri}/reset-password-wali', [TpqStudentController::class, 'resetWaliPassword'])->name('santri.reset-wali-password');
 
             Route::prefix('absensi')->name('attendance.')->group(function () {
                 Route::get('/', [TpqAttendanceController::class, 'index'])->name('index');
