@@ -35,6 +35,8 @@ class TpqStudent extends Model
         'guardian_name',
         'guardian_phone',
         'guardian_whatsapp',
+        'notify_whatsapp',
+        'notify_webpush',
         'guardian_password',
         'parent_occupation',
         'status',
@@ -54,6 +56,8 @@ class TpqStudent extends Model
             'entry_date' => 'date',
             'exit_date' => 'date',
             'guardian_password' => 'hashed',
+            'notify_whatsapp' => 'boolean',
+            'notify_webpush' => 'boolean',
         ];
     }
 
@@ -80,6 +84,11 @@ class TpqStudent extends Model
     public function hafalanProgress(): HasMany
     {
         return $this->hasMany(TpqHafalanProgress::class, 'student_id');
+    }
+
+    public function dailyProgress(): HasMany
+    {
+        return $this->hasMany(TpqDailyProgress::class, 'student_id');
     }
 
     public function reportCards(): HasMany

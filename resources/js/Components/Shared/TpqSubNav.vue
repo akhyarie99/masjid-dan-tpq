@@ -25,6 +25,7 @@ const items = [
   { label: 'Kelas', route: 'admin.tpq.kelas.index' },
   { label: 'Data Santri', route: 'admin.tpq.santri.index' },
   { label: 'Absensi', route: 'admin.tpq.attendance.index' },
+  { label: 'Harian', route: 'admin.tpq.daily-progress.index' },
   { label: 'Nilai', route: 'admin.tpq.grade.index' },
   { label: 'Raport', route: 'admin.tpq.report.index' },
   { label: 'SPP', route: 'admin.tpq.spp.index' },

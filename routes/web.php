@@ -41,6 +41,7 @@ use App\Http\Controllers\Tpq\TpqAcademicYearController;
 use App\Http\Controllers\Tpq\TpqAttendanceController;
 use App\Http\Controllers\Tpq\TpqCertificateController;
 use App\Http\Controllers\Tpq\TpqClassController;
+use App\Http\Controllers\Tpq\TpqDailyProgressController;
 use App\Http\Controllers\Tpq\TpqDashboardController;
 use App\Http\Controllers\Tpq\TpqGradeController;
 use App\Http\Controllers\Tpq\TpqHafalanController;
@@ -211,6 +212,12 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('/', [TpqGradeController::class, 'index'])->name('index');
                 Route::get('{class}/{semester}', [TpqGradeController::class, 'show'])->name('show');
                 Route::post('{class}/{semester}', [TpqGradeController::class, 'store'])->name('store');
+            });
+
+            Route::prefix('harian')->name('daily-progress.')->group(function () {
+                Route::get('/', [TpqDailyProgressController::class, 'index'])->name('index');
+                Route::get('{class}', [TpqDailyProgressController::class, 'show'])->name('show');
+                Route::post('{class}', [TpqDailyProgressController::class, 'store'])->name('store');
             });
 
             Route::prefix('hafalan')->name('hafalan.')->group(function () {
