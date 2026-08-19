@@ -44,6 +44,8 @@ Route::prefix('mobile/v1')->name('mobile.')->group(function () {
                 Route::get('santri/{student}/hafalan', [MobileCapaianController::class, 'hafalan'])->name('hafalan');
                 Route::post('santri/{student}/nilai', [MobileCapaianController::class, 'inputNilai'])->name('nilai');
                 Route::post('santri/{student}/hafalan', [MobileCapaianController::class, 'updateHafalan'])->name('hafalan.update');
+                Route::get('santri/{student}/harian', [MobileCapaianController::class, 'dailyProgress'])->name('harian');
+                Route::post('santri/{student}/harian', [MobileCapaianController::class, 'inputDailyProgress'])->name('harian.store');
             });
 
             // SPP (read-only untuk ustadz)

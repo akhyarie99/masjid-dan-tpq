@@ -6,6 +6,7 @@ use App\Http\Controllers\Api\Mobile\Concerns\ScopesTeacherClasses;
 use App\Http\Controllers\Controller;
 use App\Models\TpqAcademicYear;
 use App\Models\TpqClass;
+use App\Models\TpqDailyProgress;
 use App\Models\TpqGrade;
 use App\Models\TpqHafalanProgress;
 use App\Models\TpqSemester;
@@ -13,6 +14,7 @@ use App\Models\TpqStudent;
 use App\Models\TpqStudentClass;
 use App\Models\TpqSubject;
 use App\Services\FcmService;
+use App\Services\GuardianNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -145,6 +147,81 @@ class MobileCapaianController extends Controller
         );
 
         return response()->json(['message' => 'Hafalan berhasil diperbarui.', 'hafalan' => $progress]);
+    }
+
+    public function dailyProgress(Request $request, TpqStudent $student): JsonResponse
+    {
+        if (! $this->assertStudentAccessible($request, $student)) {
+            return response()->json(['message' => 'Santri tidak ditemukan di masjid Anda.'], 403);
+        }
+
+        $entries = TpqDailyProgress::where('student_id', $student->id)
+            ->orderByDesc('date')
+            ->limit(20)
+            ->get()
+            ->map(fn (TpqDailyProgress $p) => [
+                'id' => $p->id,
+                'date' => $p->date->toDateString(),
+                'method' => $p->method,
+                'jilid' => $p->jilid,
+                'halaman' => $p->halaman,
+                'surah' => $p->surah,
+                'ayat_awal' => $p->ayat_awal,
+                'ayat_akhir' => $p->ayat_akhir,
+                'keterangan' => $p->keterangan,
+                'catatan' => $p->catatan,
+                'summary' => $p->summary(),
+            ]);
+
+        return response()->json(['daily_progress' => $entries]);
+    }
+
+    public function inputDailyProgress(Request $request, TpqStudent $student): JsonResponse
+    {
+        if (! $this->assertStudentAccessible($request, $student)) {
+            return response()->json(['message' => 'Santri tidak ditemukan di masjid Anda.'], 403);
+        }
+
+        $data = $request->validate([
+            'class_id' => ['required', 'uuid', 'exists:tpq_classes,id'],
+            'date' => ['required', 'date'],
+            'method' => ['required', 'in:iqro,quran'],
+            'jilid' => ['nullable', 'integer', 'min:1', 'max:6', 'required_if:method,iqro'],
+            'halaman' => ['nullable', 'integer', 'min:1'],
+            'surah' => ['nullable', 'string', 'max:255', 'required_if:method,quran'],
+            'ayat_awal' => ['nullable', 'integer', 'min:1'],
+            'ayat_akhir' => ['nullable', 'integer', 'min:1'],
+            'keterangan' => ['required', 'in:lancar,ulang'],
+            'catatan' => ['nullable', 'string'],
+        ]);
+
+        $isNew = ! TpqDailyProgress::where('student_id', $student->id)->whereDate('date', $data['date'])->exists();
+
+        $progress = TpqDailyProgress::updateOrCreate(
+            ['student_id' => $student->id, 'date' => $data['date']],
+            [
+                'class_id' => $data['class_id'],
+                'method' => $data['method'],
+                'jilid' => $data['method'] === 'iqro' ? ($data['jilid'] ?? null) : null,
+                'halaman' => $data['halaman'] ?? null,
+                'surah' => $data['method'] === 'quran' ? ($data['surah'] ?? null) : null,
+                'ayat_awal' => $data['method'] === 'quran' ? ($data['ayat_awal'] ?? null) : null,
+                'ayat_akhir' => $data['method'] === 'quran' ? ($data['ayat_akhir'] ?? null) : null,
+                'keterangan' => $data['keterangan'],
+                'catatan' => $data['catatan'] ?? null,
+                'recorded_by' => $request->user()->id,
+            ],
+        );
+
+        if ($isNew) {
+            app(GuardianNotifier::class)->notify(
+                $student,
+                "Assalamu'alaikum, Ananda {$student->name} hari ini mengaji: {$progress->summary()} ({$progress->keterangan}). Barakallahu fiik."
+            );
+            $progress->update(['notified_at' => now()]);
+        }
+
+        return response()->json(['message' => 'Progres mengaji berhasil disimpan.', 'daily_progress' => $progress]);
     }
 
     private function assertStudentAccessible(Request $request, TpqStudent $student): bool
