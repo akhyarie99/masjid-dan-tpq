@@ -10,7 +10,7 @@ class AuthenticateWali
 {
     public function handle(Request $request, Closure $next): Response
     {
-        if (! $request->session()->get('wali_phone')) {
+        if (! $request->session()->get('wali_account_id')) {
             return redirect()->route('wali.login');
         }
 

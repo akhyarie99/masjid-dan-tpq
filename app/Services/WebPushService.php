@@ -35,14 +35,14 @@ class WebPushService
         return $this->webPush !== null;
     }
 
-    public function sendToGuardian(string $guardianPhone, string $title, string $body, string $url = '/wali/dashboard'): void
+    public function sendToWaliAccount(string $waliAccountId, string $title, string $body, string $url = '/wali/dashboard'): void
     {
         if (! $this->webPush) {
             return;
         }
 
         $payload = json_encode(['title' => $title, 'body' => $body, 'url' => $url]);
-        $subscriptions = TpqGuardianPushSubscription::where('guardian_phone', $guardianPhone)->get();
+        $subscriptions = TpqGuardianPushSubscription::where('wali_account_id', $waliAccountId)->get();
 
         // Kirim satu-satu (bukan queueNotification+flush batch) supaya satu subscription
         // yang datanya rusak/kadaluarsa tidak menggagalkan pengiriman ke device lain.
@@ -62,7 +62,7 @@ class WebPushService
                     $record->delete();
                 }
             } catch (Throwable $e) {
-                Log::warning('Gagal kirim web push ke wali', ['guardian_phone' => $guardianPhone, 'subscription_id' => $record->id, 'error' => $e->getMessage()]);
+                Log::warning('Gagal kirim web push ke wali', ['wali_account_id' => $waliAccountId, 'subscription_id' => $record->id, 'error' => $e->getMessage()]);
             }
         }
     }

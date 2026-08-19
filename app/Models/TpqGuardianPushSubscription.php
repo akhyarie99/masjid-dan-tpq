@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class TpqGuardianPushSubscription extends Model
 {
@@ -12,10 +13,15 @@ class TpqGuardianPushSubscription extends Model
     protected $table = 'tpq_guardian_push_subscriptions';
 
     protected $fillable = [
-        'guardian_phone',
+        'wali_account_id',
         'endpoint',
         'public_key',
         'auth_token',
         'content_encoding',
     ];
+
+    public function waliAccount(): BelongsTo
+    {
+        return $this->belongsTo(WaliAccount::class);
+    }
 }

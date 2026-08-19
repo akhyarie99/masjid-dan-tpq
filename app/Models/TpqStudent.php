@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Facades\Hash;
@@ -18,6 +19,18 @@ class TpqStudent extends Model
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()->logOnlyDirty()->logAll()->logExcept(['guardian_password']);
+    }
+
+    protected static function booted(): void
+    {
+        // Sinkron otomatis di SATU tempat (bukan diulang di setiap controller/import
+        // yang membuat/mengubah santri) supaya akun wali tidak pernah ketinggalan
+        // saat guardian_phone diisi/diganti, dari jalur manapun.
+        static::saved(function (self $student) {
+            if ($student->wasRecentlyCreated || $student->wasChanged('guardian_phone')) {
+                WaliAccount::syncForStudent($student);
+            }
+        });
     }
 
     protected $fillable = [
@@ -89,6 +102,11 @@ class TpqStudent extends Model
     public function dailyProgress(): HasMany
     {
         return $this->hasMany(TpqDailyProgress::class, 'student_id');
+    }
+
+    public function waliAccounts(): BelongsToMany
+    {
+        return $this->belongsToMany(WaliAccount::class, 'wali_account_student', 'student_id', 'wali_account_id');
     }
 
     public function reportCards(): HasMany

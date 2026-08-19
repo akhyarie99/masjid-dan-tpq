@@ -16,7 +16,7 @@ class SendGuardianWebPush implements ShouldQueue
     public int $tries = 3;
 
     public function __construct(
-        public string $guardianPhone,
+        public string $waliAccountId,
         public string $title,
         public string $body,
         public string $url = '/wali/dashboard',
@@ -24,6 +24,6 @@ class SendGuardianWebPush implements ShouldQueue
 
     public function handle(WebPushService $webPush): void
     {
-        $webPush->sendToGuardian($this->guardianPhone, $this->title, $this->body, $this->url);
+        $webPush->sendToWaliAccount($this->waliAccountId, $this->title, $this->body, $this->url);
     }
 }

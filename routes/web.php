@@ -92,6 +92,7 @@ Route::prefix('wali')->name('wali.')->group(function () {
     Route::middleware('auth.wali')->group(function () {
         Route::post('/logout', [WaliController::class, 'logout'])->name('logout');
         Route::get('/dashboard', [WaliController::class, 'dashboard'])->name('dashboard');
+        Route::get('/santri/{student}', [WaliController::class, 'studentDetail'])->name('santri');
         Route::get('/raport/{reportCard}', [WaliController::class, 'reportCard'])->name('reportcard');
         Route::get('/raport/{reportCard}/pdf', [WaliController::class, 'reportCardPdf'])->name('reportcard.pdf');
         Route::post('/notifikasi', [WaliController::class, 'updateNotificationPreferences'])->name('notifications.update');
