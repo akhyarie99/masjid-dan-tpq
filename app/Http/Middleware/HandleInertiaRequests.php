@@ -36,6 +36,7 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $user = $request->user();
+        $tenant = $request->attributes->get('tenant');
 
         return [
             ...parent::share($request),
@@ -50,11 +51,14 @@ class HandleInertiaRequests extends Middleware
                     'permissions' => $user->getAllPermissions()->pluck('name'),
                 ] : null,
             ],
-            'masjid' => $user?->masjid ? [
-                'id' => $user->masjid->id,
-                'name' => $user->masjid->name,
-                'slug' => $user->masjid->slug,
-                'logo_url' => $user->masjid->logo_url,
+            // Dibaca dari tenant hasil resolusi ResolveTenant (host request), bukan
+            // dari user login — supaya halaman publik/guest (portal, jam digital)
+            // juga dapat branding masjid, tidak cuma halaman yang butuh login.
+            'masjid' => $tenant ? [
+                'id' => $tenant->id,
+                'name' => $tenant->name,
+                'slug' => $tenant->slug,
+                'logo_url' => $tenant->logo_url,
             ] : null,
             'flash' => [
                 'success' => fn () => $request->session()->get('success'),

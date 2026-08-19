@@ -1,12 +1,12 @@
 <?php
 
+use App\Http\Controllers\Activity\ActivityController;
+use App\Http\Controllers\Activity\AttendanceController;
 use App\Http\Controllers\AnnouncementController;
 use App\Http\Controllers\Api\Mobile\WebviewLoginController;
 use App\Http\Controllers\Asset\AssetController;
 use App\Http\Controllers\Asset\AssetLoanController;
 use App\Http\Controllers\Asset\MaintenanceController;
-use App\Http\Controllers\Activity\ActivityController;
-use App\Http\Controllers\Activity\AttendanceController;
 use App\Http\Controllers\Auth\AuthController;
 use App\Http\Controllers\Dashboard\DashboardController;
 use App\Http\Controllers\Finance\BudgetController;
@@ -32,6 +32,7 @@ use App\Http\Controllers\Ramadhan\QurbanController;
 use App\Http\Controllers\Ramadhan\RamadhanController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Settings\AuditLogController;
+use App\Http\Controllers\Settings\DomainController;
 use App\Http\Controllers\Settings\MasjidLocationController;
 use App\Http\Controllers\Settings\SettingController;
 use App\Http\Controllers\Settings\UserController;
@@ -55,6 +56,15 @@ use App\Http\Controllers\Wakaf\BuildingProjectController;
 use App\Http\Controllers\Wakaf\WakafController;
 use App\Http\Controllers\WaliController;
 use Illuminate\Support\Facades\Route;
+
+// Satu-satunya tempat Route::domain() dipakai — aman di sini karena domain
+// pusat memang fixed/diketahui saat boot, beda dengan subdomain/custom domain
+// tenant yang jumlahnya dinamis (lihat ResolveTenant middleware). HARUS
+// didaftarkan sebelum route tenant di bawah — Laravel mencocokkan route
+// berdasarkan urutan pendaftaran, bukan spesifisitas constraint domain, jadi
+// kalau ini didaftarkan belakangan, route "/" tanpa domain constraint di
+// bawah akan selalu menang duluan untuk host manapun termasuk domain pusat.
+Route::domain(config('tenancy.central_domain'))->group(base_path('routes/central.php'));
 
 // === PUBLIC PORTAL ===
 Route::get('/', [PublicPortalController::class, 'index'])->name('home');
@@ -365,6 +375,8 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('masjid/logo', [SettingController::class, 'removeLogo'])->name('masjid.logo.destroy');
             Route::post('masjid/background', [SettingController::class, 'updateBackground'])->name('masjid.background');
             Route::delete('masjid/background', [SettingController::class, 'removeBackground'])->name('masjid.background.destroy');
+            Route::post('domain', [DomainController::class, 'update'])->name('domain');
+            Route::post('domain/verify', [DomainController::class, 'verify'])->name('domain.verify');
             Route::resource('pengguna', UserController::class)->except(['show']);
             Route::get('log-aktivitas', [AuditLogController::class, 'index'])->name('audit-log');
             Route::resource('lokasi-presensi', MasjidLocationController::class)

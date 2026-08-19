@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-    <meta name="theme-color" content="#16a34a">
+    <meta name="theme-color" content="{{ tenant()?->theme_color ?? '#16a34a' }}">
     @if (request()->is('wali*'))
         {{-- crossorigin="use-credentials" WAJIB ada: tanpa ini browser fetch manifest
              tanpa cookie sesi, middleware auth.wali menganggap belum login, redirect
@@ -16,9 +16,11 @@
     @else
         <link rel="manifest" href="/manifest.json">
     @endif
-    <link rel="icon" href="/icons/icon.svg" type="image/svg+xml">
-    <link rel="apple-touch-icon" href="/icons/icon.svg">
-    <title inertia>{{ config('app.name', 'SiMasjid') }}</title>
+    {{-- Tenant hasil resolusi ResolveTenant (lihat app/Support/helpers.php) — null
+         di domain pusat, jadi otomatis fallback ke branding platform default. --}}
+    <link rel="icon" href="{{ tenant()?->logo_url ?? '/icons/icon.svg' }}" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="{{ tenant()?->logo_url ?? '/icons/icon.svg' }}">
+    <title inertia>{{ tenant()?->name ?? config('app.name', 'SiMasjid') }}</title>
 
     <script>
         (function () {

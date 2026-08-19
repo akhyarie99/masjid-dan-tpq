@@ -9,7 +9,6 @@ use App\Models\Asset;
 use App\Models\BuildingProject;
 use App\Models\Donation;
 use App\Models\ImamSchedule;
-use App\Models\Masjid;
 use App\Models\PrayerSchedule;
 use App\Models\Transaction;
 use Illuminate\Support\Carbon;
@@ -21,7 +20,7 @@ class PublicPortalController extends Controller
 {
     public function index(): Response
     {
-        $masjid = Masjid::where('is_active', true)->firstOrFail();
+        $masjid = tenant();
 
         $todaySchedule = Cache::remember(
             "prayer-schedule:{$masjid->id}:today",
@@ -91,7 +90,7 @@ class PublicPortalController extends Controller
 
     public function donation(): Response
     {
-        $masjid = Masjid::where('is_active', true)->firstOrFail();
+        $masjid = tenant();
 
         return Inertia::render('Public/Donation/Index', [
             'masjid' => $masjid->only(['id', 'name', 'bank_accounts', 'logo_url']),
@@ -104,7 +103,7 @@ class PublicPortalController extends Controller
 
     public function financialReport(): Response
     {
-        $masjid = Masjid::where('is_active', true)->firstOrFail();
+        $masjid = tenant();
 
         $from = now()->startOfMonth();
         $to = now()->endOfMonth();
@@ -137,7 +136,7 @@ class PublicPortalController extends Controller
 
     public function imamSchedule(): Response
     {
-        $masjid = Masjid::where('is_active', true)->firstOrFail();
+        $masjid = tenant();
 
         $monthStart = now()->startOfMonth();
         $monthEnd = now()->endOfMonth();
@@ -158,7 +157,7 @@ class PublicPortalController extends Controller
 
     public function activities(): Response
     {
-        $masjid = Masjid::where('is_active', true)->firstOrFail();
+        $masjid = tenant();
 
         $activities = Activity::where('masjid_id', $masjid->id)
             ->whereIn('status', ['published', 'ongoing'])
@@ -193,7 +192,7 @@ class PublicPortalController extends Controller
 
     public function digitalClock(): Response
     {
-        $masjid = Masjid::where('is_active', true)->firstOrFail();
+        $masjid = tenant();
 
         $todaySchedule = Cache::remember(
             "prayer-schedule:{$masjid->id}:today",

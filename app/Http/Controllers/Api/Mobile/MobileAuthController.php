@@ -18,7 +18,9 @@ class MobileAuthController extends Controller
             'fcm_token' => ['nullable', 'string'],
         ]);
 
-        $user = User::where('phone', $request->phone)->first();
+        // Discope ke tenant hasil resolusi host — flavor app per lembaga akan
+        // memanggil subdomain/domain masing-masing, jadi tenant() selalu terisi.
+        $user = User::where('masjid_id', tenant()->id)->where('phone', $request->phone)->first();
 
         if (! $user || ! $user->is_active || ! Hash::check($request->password, $user->password)) {
             return response()->json(['message' => 'Nomor HP atau password salah, atau akun tidak aktif.'], 401);

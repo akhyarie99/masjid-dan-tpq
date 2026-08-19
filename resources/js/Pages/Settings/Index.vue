@@ -72,6 +72,45 @@
       </div>
     </AppCard>
 
+    <AppCard title="Alamat Portal" subtitle="Alamat yang dipakai jamaah/wali/staf untuk mengakses portal lembaga ini." class="mb-6">
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-[var(--text-primary)] mb-1">Subdomain (otomatis)</label>
+          <p class="text-sm text-[var(--text-muted)]">{{ masjid.slug }}.{{ centralDomain }}</p>
+        </div>
+
+        <div class="border-t border-[var(--border)] pt-4">
+          <form class="space-y-3" @submit.prevent="submitDomain">
+            <AppInput
+              v-model="domainForm.custom_domain"
+              label="Domain Sendiri (opsional)"
+              placeholder="contoh: tpqnurulhuda.com"
+              hint="Setelah disimpan, arahkan DNS TXT record sesuai instruksi lalu klik Verifikasi."
+              :error="domainForm.errors.custom_domain"
+            />
+            <AppButton type="submit" variant="secondary" :loading="domainForm.processing">Simpan Domain</AppButton>
+          </form>
+
+          <div v-if="masjid.custom_domain" class="mt-4 p-3 rounded-lg bg-[var(--bg-muted)] text-sm">
+            <p class="text-[var(--text-primary)]">
+              Status:
+              <span v-if="masjid.custom_domain_verified_at" class="text-green-600 font-medium">Terverifikasi &amp; aktif</span>
+              <span v-else class="text-amber-600 font-medium">Belum diverifikasi</span>
+            </p>
+            <template v-if="!masjid.custom_domain_verified_at">
+              <p class="text-[var(--text-muted)] mt-2">Pasang DNS TXT record berikut, lalu klik Verifikasi (propagasi DNS bisa sampai 24 jam):</p>
+              <code class="block mt-1 p-2 rounded bg-[var(--bg-base)] text-xs break-all">
+                _tpq-verify.{{ masjid.custom_domain }} TXT tpq-verify={{ masjid.custom_domain_verification_token }}
+              </code>
+              <AppButton type="button" variant="secondary" class="mt-3" :loading="verifyForm.processing" @click="verifyDomain">
+                Verifikasi
+              </AppButton>
+            </template>
+          </div>
+        </div>
+      </div>
+    </AppCard>
+
     <AppCard title="Profil Masjid" subtitle="Informasi ini ditampilkan di portal publik dan digunakan untuk kalkulasi jadwal shalat.">
       <form class="space-y-4" @submit.prevent="submit">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -138,7 +177,19 @@ import AppButton from '@/Components/UI/AppButton.vue'
 
 const props = defineProps({
   masjid: { type: Object, required: true },
+  centralDomain: { type: String, required: true },
 })
+
+const domainForm = useForm({ custom_domain: props.masjid.custom_domain ?? '' })
+const verifyForm = useForm({})
+
+function submitDomain() {
+  domainForm.post(route('admin.settings.domain'), { preserveScroll: true })
+}
+
+function verifyDomain() {
+  verifyForm.post(route('admin.settings.domain.verify'), { preserveScroll: true })
+}
 
 const form = useForm({
   name: props.masjid.name,

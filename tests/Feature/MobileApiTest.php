@@ -93,6 +93,8 @@ class MobileApiTest extends TestCase
 
     public function test_unauthenticated_request_is_rejected(): void
     {
+        $this->createMasjid();
+
         $response = $this->getJson(route('mobile.dashboard'));
 
         $response->assertStatus(401);

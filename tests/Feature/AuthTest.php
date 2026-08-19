@@ -80,6 +80,8 @@ class AuthTest extends TestCase
 
     public function test_guest_cannot_access_admin_dashboard(): void
     {
+        $this->createMasjid();
+
         $response = $this->get('/admin/dashboard');
 
         $response->assertRedirect(route('login'));

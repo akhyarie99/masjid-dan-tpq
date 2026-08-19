@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Http\Controllers\Controller;
-use App\Models\Masjid;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -16,6 +15,7 @@ class SettingController extends Controller
     {
         return Inertia::render('Settings/Index', [
             'masjid' => $request->user()->masjid,
+            'centralDomain' => config('tenancy.central_domain'),
         ]);
     }
 

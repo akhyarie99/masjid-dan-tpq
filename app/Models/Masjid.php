@@ -32,6 +32,11 @@ class Masjid extends Model
         'logo',
         'background_image',
         'is_active',
+        'custom_domain',
+        'custom_domain_verified_at',
+        'custom_domain_verification_token',
+        'subscription_status',
+        'theme_color',
     ];
 
     protected function casts(): array
@@ -42,17 +47,42 @@ class Masjid extends Model
             'bank_accounts' => 'array',
             'is_active' => 'boolean',
             'iqomah_offset_minutes' => 'integer',
+            'custom_domain_verified_at' => 'datetime',
         ];
+    }
+
+    /**
+     * Bukan asset()/APP_URL — di dunia multi-tenant tiap tenant diakses dari host
+     * yang beda-beda (subdomain atau custom domain sendiri), jadi URL storage
+     * harus ikut host request yang sedang berjalan, bukan satu APP_URL global
+     * yang cuma benar untuk domain pusat.
+     */
+    /**
+     * slug dipakai sebagai segmen subdomain ("{slug}.central-domain"), dan
+     * hostname itu case-insensitive — ResolveTenant middleware selalu
+     * lowercase host sebelum lookup, jadi slug juga wajib selalu lowercase
+     * di database supaya keduanya tetap cocok.
+     */
+    protected function slug(): Attribute
+    {
+        return Attribute::set(fn (string $value) => strtolower($value));
     }
 
     protected function logoUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->logo ? asset('storage/'.$this->logo) : null);
+        return Attribute::get(fn () => $this->logo ? $this->storageUrl($this->logo) : null);
     }
 
     protected function backgroundUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->background_image ? asset('storage/'.$this->background_image) : null);
+        return Attribute::get(fn () => $this->background_image ? $this->storageUrl($this->background_image) : null);
+    }
+
+    private function storageUrl(string $path): string
+    {
+        $root = app()->runningInConsole() ? config('app.url') : request()->getSchemeAndHttpHost();
+
+        return "{$root}/storage/{$path}";
     }
 
     public function users(): HasMany

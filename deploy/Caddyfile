@@ -1,0 +1,76 @@
+# Caddyfile SiMasjid — ganti dari nginx.conf supaya custom domain tenant
+# manapun otomatis dapat sertifikat HTTPS (on-demand TLS) tanpa certbot manual.
+# Salin/symlink ke /etc/caddy/Caddyfile lalu `sudo systemctl reload caddy`.
+
+{
+	# Endpoint "ask" — dipanggil Caddy sebelum menerbitkan sertifikat untuk
+	# hostname yang belum dikenal (subdomain tenant baru atau custom domain).
+	# Mencegah orang lain mengarahkan domain sembarang ke server ini dan
+	# otomatis dapat SSL cert atas nama aplikasi ini — lihat
+	# App\Http\Controllers\Internal\DomainCheckController.
+	on_demand_tls {
+		ask https://tpq.smartedugame.com/internal/domain-check
+	}
+}
+
+# Domain pusat SaaS (landing + pendaftaran) — hostname tetap/diketahui,
+# sertifikatnya diterbitkan normal (bukan on-demand).
+tpq.smartedugame.com {
+	root * /var/www/html/tpq/public
+	encode gzip
+
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+	}
+
+	@static path *.css *.js *.svg *.woff *.woff2 *.ttf *.eot *.png *.jpg *.jpeg *.gif *.ico *.webp
+	header @static Cache-Control "public, max-age=2592000, immutable"
+
+	# WebSocket Reverb (live donation ticker di portal publik)
+	handle /app* {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle {
+		php_fastcgi unix//run/php/php8.3-fpm.sock
+		file_server
+	}
+
+	@dotfiles path_regexp \/\.(?!well-known)
+	respond @dotfiles 404
+}
+
+# Semua subdomain tenant ("{slug}.tpq.smartedugame.com") DAN custom domain
+# tenant yang sudah terverifikasi — satu blok catch-all dengan on-demand TLS,
+# Caddy terbitkan sertifikat individual per hostname begitu pertama diakses,
+# dicek dulu lewat "ask" endpoint di atas. Tidak pakai wildcard cert supaya
+# tidak perlu plugin DNS-01 provider tambahan.
+:443 {
+	tls {
+		on_demand
+	}
+
+	root * /var/www/html/tpq/public
+	encode gzip
+
+	header {
+		X-Frame-Options "SAMEORIGIN"
+		X-Content-Type-Options "nosniff"
+	}
+
+	@static path *.css *.js *.svg *.woff *.woff2 *.ttf *.eot *.png *.jpg *.jpeg *.gif *.ico *.webp
+	header @static Cache-Control "public, max-age=2592000, immutable"
+
+	handle /app* {
+		reverse_proxy 127.0.0.1:8080
+	}
+
+	handle {
+		php_fastcgi unix//run/php/php8.3-fpm.sock
+		file_server
+	}
+
+	@dotfiles path_regexp \/\.(?!well-known)
+	respond @dotfiles 404
+}

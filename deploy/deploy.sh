@@ -34,6 +34,9 @@ sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl restart all
 
+echo "==> Reload Caddy"
+sudo systemctl reload caddy
+
 echo "==> Perbaikan permission storage"
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 755 storage bootstrap/cache

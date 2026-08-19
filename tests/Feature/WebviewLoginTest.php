@@ -25,6 +25,8 @@ class WebviewLoginTest extends TestCase
 
     public function test_invalid_webview_token_is_rejected(): void
     {
+        $this->createMasjid();
+
         $response = $this->get('/webview-login?token=bogus-token');
 
         $response->assertStatus(401);

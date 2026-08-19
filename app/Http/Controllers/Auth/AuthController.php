@@ -28,7 +28,9 @@ class AuthController extends Controller
 
         $field = filter_var($credentials['identifier'], FILTER_VALIDATE_EMAIL) ? 'email' : 'phone';
 
-        $user = User::where($field, $credentials['identifier'])->first();
+        // Discope ke tenant hasil resolusi host — tanpa ini, satu nomor HP/email
+        // bisa ambigu antar lembaga begitu ada lebih dari satu masjid terdaftar.
+        $user = User::where('masjid_id', tenant()->id)->where($field, $credentials['identifier'])->first();
 
         if (! $user
             || ! $user->is_active
