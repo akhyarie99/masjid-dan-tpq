@@ -29,15 +29,22 @@
     <AppModal :show="showModal" :title="editing ? 'Edit Lokasi' : 'Tambah Lokasi'" @close="showModal = false">
       <form class="space-y-4" @submit.prevent="submit">
         <AppInput v-model="form.name" label="Nama Lokasi" placeholder="Masjid Utama / Kelas Cabang..." required :error="form.errors.name" />
+
+        <AppButton type="button" variant="secondary" class="w-full justify-center" :loading="locating" @click="useCurrentLocation">
+          <LocateFixedIcon class="w-4 h-4" /> Gunakan Lokasi Saat Ini
+        </AppButton>
+        <p v-if="locateError" class="text-xs text-red-500 -mt-2">{{ locateError }}</p>
+
         <div class="grid grid-cols-2 gap-4">
           <AppInput v-model.number="form.lat" type="number" step="0.00000001" label="Latitude" required :error="form.errors.lat" />
           <AppInput v-model.number="form.lng" type="number" step="0.00000001" label="Longitude" required :error="form.errors.lng" />
         </div>
         <AppInput v-model.number="form.radius_meters" type="number" label="Radius (meter)" hint="Jarak maksimal dari titik ini agar presensi diterima." required :error="form.errors.radius_meters" />
         <p class="text-xs text-[var(--text-muted)]">
-          Tip: buka
-          <a href="https://www.google.com/maps" target="_blank" rel="noopener" class="text-primary-600 hover:underline">Google Maps</a>,
-          klik kanan titik lokasi masjid, lalu salin koordinatnya ke sini.
+          Tip: pastikan Anda sedang berada tepat di lokasi masjid/kelas saat klik "Gunakan Lokasi Saat Ini" di atas.
+          Kalau tidak, isi manual lewat
+          <a href="https://www.google.com/maps" target="_blank" rel="noopener" class="text-primary-600 hover:underline">Google Maps</a>
+          (klik kanan titik lokasi, salin koordinatnya).
         </p>
         <label class="flex items-center gap-2 text-sm text-[var(--text-primary)]">
           <input v-model="form.is_active" type="checkbox" class="rounded border-[var(--border)] text-primary-600 focus:ring-primary-500" />
@@ -55,7 +62,7 @@
 <script setup>
 import { ref } from 'vue'
 import { Head, useForm, router } from '@inertiajs/vue3'
-import { Plus as PlusIcon } from 'lucide-vue-next'
+import { Plus as PlusIcon, LocateFixed as LocateFixedIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
@@ -70,7 +77,34 @@ defineProps({
 
 const showModal = ref(false)
 const editing = ref(null)
+const locating = ref(false)
+const locateError = ref('')
 const form = useForm({ name: '', lat: null, lng: null, radius_meters: 100, is_active: true })
+
+function useCurrentLocation() {
+  locateError.value = ''
+
+  if (!navigator.geolocation) {
+    locateError.value = 'Browser ini tidak mendukung deteksi lokasi.'
+    return
+  }
+
+  locating.value = true
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      form.lat = Number(position.coords.latitude.toFixed(8))
+      form.lng = Number(position.coords.longitude.toFixed(8))
+      locating.value = false
+    },
+    (error) => {
+      locateError.value = error.code === error.PERMISSION_DENIED
+        ? 'Izin lokasi ditolak. Aktifkan izin lokasi untuk browser ini lalu coba lagi.'
+        : 'Gagal mendapatkan lokasi. Coba lagi atau isi manual.'
+      locating.value = false
+    },
+    { enableHighAccuracy: true, timeout: 15000 },
+  )
+}
 
 function openCreate() {
   editing.value = null
