@@ -52,9 +52,13 @@
       </div>
     </AppCard>
 
-    <p class="max-w-lg mt-4 text-sm text-center">
+    <p class="max-w-lg mt-4 text-sm text-center space-x-3">
       <Link :href="route('admin.tpq.daily-progress.kelas.index')" class="text-primary-600 hover:underline">
         Atau pilih dari daftar kelas
+      </Link>
+      <span class="text-[var(--text-muted)]">·</span>
+      <Link :href="route('admin.tpq.daily-progress.recap')" class="text-primary-600 hover:underline">
+        Lihat Rekap
       </Link>
     </p>
 

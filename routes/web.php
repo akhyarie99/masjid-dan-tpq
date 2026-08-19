@@ -221,6 +221,8 @@ Route::middleware(['auth'])->group(function () {
             Route::prefix('harian')->name('daily-progress.')->group(function () {
                 Route::get('/', [TpqDailyProgressController::class, 'index'])->name('index');
                 Route::get('cari', [TpqDailyProgressController::class, 'search'])->name('search');
+                Route::get('rekap', [TpqDailyProgressController::class, 'recap'])->name('recap');
+                Route::get('rekap/export', [TpqDailyProgressController::class, 'exportRecap'])->name('recap.export');
                 Route::get('santri/{student}', [TpqDailyProgressController::class, 'showStudent'])->name('santri');
                 Route::post('santri/{student}', [TpqDailyProgressController::class, 'storeStudent'])->name('santri.store');
                 Route::get('kelas', [TpqDailyProgressController::class, 'kelasIndex'])->name('kelas.index');

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Tpq;
 
+use App\Exports\TpqDailyProgressExport;
 use App\Http\Controllers\Controller;
 use App\Models\TpqAcademicYear;
 use App\Models\TpqClass;
@@ -12,8 +13,10 @@ use App\Services\GuardianNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Inertia\Inertia;
 use Inertia\Response;
+use Maatwebsite\Excel\Facades\Excel;
 
 class TpqDailyProgressController extends Controller
 {
@@ -128,6 +131,58 @@ class TpqDailyProgressController extends Controller
         return Inertia::render('Learning/Tpq/DailyProgress/KelasIndex', [
             'classes' => TpqClass::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->orderBy('order')->get(['id', 'name']),
         ]);
+    }
+
+    public function recap(Request $request): Response
+    {
+        $month = $request->integer('month') ?: now()->month;
+        $year = $request->integer('year') ?: now()->year;
+        $classId = $request->string('class_id')->toString() ?: null;
+
+        $entries = $this->recapQuery($request, (int) $month, (int) $year, $classId)
+            ->orderByDesc('date')
+            ->get();
+
+        return Inertia::render('Learning/Tpq/DailyProgress/Recap', [
+            'classes' => TpqClass::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->orderBy('order')->get(['id', 'name']),
+            'month' => (int) $month,
+            'year' => (int) $year,
+            'classId' => $classId,
+            'entries' => $entries->map(fn (TpqDailyProgress $e) => [
+                'id' => $e->id,
+                'date' => $e->date->toDateString(),
+                'student_name' => $e->student?->name,
+                'student_nis' => $e->student?->nis,
+                'class_name' => $e->class?->name,
+                'method' => $e->method,
+                'summary' => $e->summary(),
+                'keterangan' => $e->keterangan,
+                'catatan' => $e->catatan,
+                'recorded_by' => $e->recorder?->name,
+            ]),
+        ]);
+    }
+
+    public function exportRecap(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse
+    {
+        $month = $request->integer('month') ?: now()->month;
+        $year = $request->integer('year') ?: now()->year;
+        $classId = $request->string('class_id')->toString() ?: null;
+
+        $entries = $this->recapQuery($request, (int) $month, (int) $year, $classId)->orderBy('date')->get();
+
+        return Excel::download(new TpqDailyProgressExport($entries), "rekap-mengaji-harian-{$year}-{$month}.xlsx");
+    }
+
+    private function recapQuery(Request $request, int $month, int $year, ?string $classId)
+    {
+        $start = Carbon::create($year, $month, 1)->startOfMonth();
+        $end = $start->copy()->endOfMonth();
+
+        return TpqDailyProgress::with(['student:id,name,nis', 'class:id,name', 'recorder:id,name'])
+            ->whereHas('student', fn ($q) => $q->where('masjid_id', $request->user()->masjid_id))
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
+            ->when($classId, fn ($q) => $q->where('class_id', $classId));
     }
 
     public function show(Request $request, TpqClass $class): Response
