@@ -39,6 +39,8 @@ Route::prefix('mobile/v1')->name('mobile.')->group(function () {
 
             // Capaian santri
             Route::prefix('capaian')->name('capaian.')->group(function () {
+                Route::get('cari', [MobileCapaianController::class, 'searchStudents'])->name('cari');
+                Route::get('santri/{student}/temukan', [MobileCapaianController::class, 'findStudent'])->name('temukan');
                 Route::get('kelas/{class}/santri', [MobileCapaianController::class, 'santriList'])->name('santri');
                 Route::get('santri/{student}', [MobileCapaianController::class, 'detail'])->name('detail');
                 Route::get('santri/{student}/hafalan', [MobileCapaianController::class, 'hafalan'])->name('hafalan');

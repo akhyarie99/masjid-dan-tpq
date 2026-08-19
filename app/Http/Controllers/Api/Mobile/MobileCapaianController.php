@@ -41,6 +41,62 @@ class MobileCapaianController extends Controller
         return response()->json(['students' => $students]);
     }
 
+    /**
+     * Cari santri lintas kelas (nama/NIS) atau resolve hasil scan QR kartu santri
+     * (isi QR = student id, lihat TpqStudentController::card) — dipakai supaya
+     * ustadz tidak perlu pilih kelas dulu buat cari satu anak di antara ratusan.
+     */
+    public function searchStudents(Request $request): JsonResponse
+    {
+        $query = trim((string) $request->string('q'));
+
+        if ($query === '') {
+            return response()->json(['students' => []]);
+        }
+
+        $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
+
+        $students = TpqStudent::where('masjid_id', $request->user()->masjid_id)
+            ->where('status', 'aktif')
+            ->where(fn ($q) => $q->where('name', 'like', "%{$query}%")->orWhere('nis', 'like', "%{$query}%"))
+            ->with(['studentClasses' => fn ($q) => $q->where('academic_year_id', $activeYear?->id)->with('class:id,name')])
+            ->limit(10)
+            ->get()
+            ->map(fn (TpqStudent $s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'nis' => $s->nis,
+                'photo' => $s->photo,
+                'class_id' => $s->studentClasses->first()?->class_id,
+                'class_name' => $s->studentClasses->first()?->class?->name,
+            ]);
+
+        return response()->json(['students' => $students]);
+    }
+
+    public function findStudent(Request $request, TpqStudent $student): JsonResponse
+    {
+        if (! $this->assertStudentAccessible($request, $student)) {
+            return response()->json(['message' => 'Santri tidak ditemukan di masjid Anda.'], 403);
+        }
+
+        $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
+
+        $classData = TpqStudentClass::with('class:id,name')
+            ->where('student_id', $student->id)
+            ->where('academic_year_id', $activeYear?->id)
+            ->first();
+
+        return response()->json([
+            'id' => $student->id,
+            'name' => $student->name,
+            'nis' => $student->nis,
+            'photo' => $student->photo,
+            'class_id' => $classData?->class_id,
+            'class_name' => $classData?->class?->name,
+        ]);
+    }
+
     public function detail(Request $request, TpqStudent $student): JsonResponse
     {
         if (! $this->assertStudentAccessible($request, $student)) {
