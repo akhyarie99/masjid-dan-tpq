@@ -3,9 +3,11 @@
 use App\Http\Controllers\Api\Mobile\MobileAuthController;
 use App\Http\Controllers\Api\Mobile\MobileCapaianController;
 use App\Http\Controllers\Api\Mobile\MobileDashboardController;
+use App\Http\Controllers\Api\Mobile\MobileFaceEnrollController;
 use App\Http\Controllers\Api\Mobile\MobileNotificationController;
 use App\Http\Controllers\Api\Mobile\MobilePresensiController;
 use App\Http\Controllers\Api\Mobile\MobileSppController;
+use App\Http\Controllers\Api\Mobile\MobileStaffAttendanceController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -48,6 +50,20 @@ Route::prefix('mobile/v1')->name('mobile.')->group(function () {
                 Route::post('santri/{student}/hafalan', [MobileCapaianController::class, 'updateHafalan'])->name('hafalan.update');
                 Route::get('santri/{student}/harian', [MobileCapaianController::class, 'dailyProgress'])->name('harian');
                 Route::post('santri/{student}/harian', [MobileCapaianController::class, 'inputDailyProgress'])->name('harian.store');
+            });
+
+            // Presensi ustadz sendiri (GPS + wajah) — beda dari "presensi" di atas
+            // yang itu ustadz mencatat kehadiran SANTRI.
+            Route::prefix('kehadiran-staf')->name('staff-attendance.')->group(function () {
+                Route::get('hari-ini', [MobileStaffAttendanceController::class, 'today'])->name('today');
+                Route::get('riwayat', [MobileStaffAttendanceController::class, 'history'])->name('history');
+                Route::post('masuk', [MobileStaffAttendanceController::class, 'clockIn'])->name('clock-in');
+                Route::post('keluar', [MobileStaffAttendanceController::class, 'clockOut'])->name('clock-out');
+            });
+
+            Route::prefix('wajah')->name('face.')->group(function () {
+                Route::get('status', [MobileFaceEnrollController::class, 'status'])->name('status');
+                Route::post('daftar', [MobileFaceEnrollController::class, 'store'])->name('enroll');
             });
 
             // SPP (read-only untuk ustadz)

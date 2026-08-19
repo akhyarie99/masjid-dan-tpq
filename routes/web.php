@@ -32,6 +32,7 @@ use App\Http\Controllers\Ramadhan\QurbanController;
 use App\Http\Controllers\Ramadhan\RamadhanController;
 use App\Http\Controllers\Report\ReportController;
 use App\Http\Controllers\Settings\AuditLogController;
+use App\Http\Controllers\Settings\MasjidLocationController;
 use App\Http\Controllers\Settings\SettingController;
 use App\Http\Controllers\Settings\UserController;
 use App\Http\Controllers\Study\MajelisAnggotaController;
@@ -352,6 +353,9 @@ Route::middleware(['auth'])->group(function () {
             Route::delete('masjid/background', [SettingController::class, 'removeBackground'])->name('masjid.background.destroy');
             Route::resource('pengguna', UserController::class)->except(['show']);
             Route::get('log-aktivitas', [AuditLogController::class, 'index'])->name('audit-log');
+            Route::resource('lokasi-presensi', MasjidLocationController::class)
+                ->except(['show', 'create', 'edit'])
+                ->parameters(['lokasi-presensi' => 'location']);
         });
     });
 });

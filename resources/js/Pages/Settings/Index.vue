@@ -10,6 +10,9 @@
         <Link v-if="route().has('admin.settings.audit-log')" :href="route('admin.settings.audit-log')" class="btn-secondary">
           <HistoryIcon class="w-4 h-4" /> Log Aktivitas
         </Link>
+        <Link v-if="route().has('admin.settings.lokasi-presensi.index')" :href="route('admin.settings.lokasi-presensi.index')" class="btn-secondary">
+          <MapPinIcon class="w-4 h-4" /> Lokasi Presensi
+        </Link>
       </template>
     </PageHeader>
 
@@ -125,7 +128,7 @@
 <script setup>
 import { computed, ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
-import { Users as UsersIcon, History as HistoryIcon } from 'lucide-vue-next'
+import { Users as UsersIcon, History as HistoryIcon, MapPin as MapPinIcon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
