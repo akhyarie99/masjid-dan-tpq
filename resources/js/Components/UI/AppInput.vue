@@ -4,23 +4,38 @@
       {{ label }}
       <span v-if="required" class="text-red-500">*</span>
     </label>
-    <input
-      :id="id"
-      :type="type"
-      :value="modelValue"
-      :placeholder="placeholder"
-      :disabled="disabled"
-      class="input"
-      :class="{ 'border-red-500 focus:ring-red-500': error }"
-      @input="$emit('update:modelValue', $event.target.value)"
-    />
+    <div class="relative">
+      <input
+        :id="id"
+        :type="inputType"
+        :value="modelValue"
+        :placeholder="placeholder"
+        :disabled="disabled"
+        class="input"
+        :class="{ 'border-red-500 focus:ring-red-500': error, 'pr-10': isPassword }"
+        @input="$emit('update:modelValue', $event.target.value)"
+      />
+      <button
+        v-if="isPassword"
+        type="button"
+        tabindex="-1"
+        class="absolute inset-y-0 right-0 flex items-center px-3 text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+        @click="showPassword = !showPassword"
+      >
+        <EyeOffIcon v-if="showPassword" class="w-4 h-4" />
+        <EyeIcon v-else class="w-4 h-4" />
+      </button>
+    </div>
     <p v-if="error" class="mt-1 text-xs text-red-500">{{ error }}</p>
     <p v-else-if="hint" class="mt-1 text-xs text-[var(--text-muted)]">{{ hint }}</p>
   </div>
 </template>
 
 <script setup>
-defineProps({
+import { computed, ref } from 'vue'
+import { Eye as EyeIcon, EyeOff as EyeOffIcon } from 'lucide-vue-next'
+
+const props = defineProps({
   modelValue: { type: [String, Number], default: '' },
   label: { type: String, default: '' },
   type: { type: String, default: 'text' },
@@ -33,4 +48,8 @@ defineProps({
 })
 
 defineEmits(['update:modelValue'])
+
+const isPassword = computed(() => props.type === 'password')
+const showPassword = ref(false)
+const inputType = computed(() => (isPassword.value && showPassword.value ? 'text' : props.type))
 </script>
