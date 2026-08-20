@@ -41,10 +41,13 @@ class TpqAttendanceTest extends TestCase
         return [$class, $student, $year];
     }
 
-    public function test_ustadz_can_input_attendance(): void
+    public function test_admin_can_input_attendance(): void
     {
+        // Sengaja pakai 'admin', bukan 'ustadz' — sejak pembatasan role ustadz
+        // (hanya TPQ > Harian), absensi kelas reguler jadi kewenangan admin/tpq.manage,
+        // ustadz mencatat progres mengaji lewat Harian (tpq.daily-progress.*), bukan di sini.
         $masjid = $this->createMasjid();
-        $user = $this->createUser($masjid, 'ustadz');
+        $user = $this->createUser($masjid, 'admin');
         [$class, $student] = $this->makeClassWithStudent($masjid);
 
         $response = $this->actingAs($user)->post(route('admin.tpq.attendance.store', $class), [
@@ -100,7 +103,7 @@ class TpqAttendanceTest extends TestCase
     public function test_alfa_status_is_recorded_for_absent_student(): void
     {
         $masjid = $this->createMasjid();
-        $user = $this->createUser($masjid, 'ustadz');
+        $user = $this->createUser($masjid, 'admin');
         [$class, $student] = $this->makeClassWithStudent($masjid);
 
         $this->actingAs($user)->post(route('admin.tpq.attendance.store', $class), [

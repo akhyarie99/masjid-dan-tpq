@@ -6,7 +6,7 @@
       <template #actions>
         <a :href="route('admin.ramadhan.qurban.export-pdf', { year })" class="btn-secondary"><FileTextIcon class="w-4 h-4" /> Daftar Shohibul (PDF)</a>
         <a :href="route('admin.ramadhan.qurban.distribution-report', { year })" class="btn-secondary"><FileTextIcon class="w-4 h-4" /> Laporan Distribusi</a>
-        <AppButton @click="showAdd = true"><PlusIcon class="w-4 h-4" /> Daftar Qurban</AppButton>
+        <AppButton v-if="can('ramadhan.manage')" @click="showAdd = true"><PlusIcon class="w-4 h-4" /> Daftar Qurban</AppButton>
       </template>
     </PageHeader>
 
@@ -40,7 +40,7 @@
                 <td>{{ registration.shohibul_name }}</td>
                 <td class="capitalize">{{ registration.animal_type }} {{ registration.animal_type === 'sapi' ? `(${registration.share_count}/7)` : '' }}</td>
                 <td><AppBadge :variant="registration.payment_status === 'paid' ? 'green' : 'yellow'">{{ registration.payment_status === 'paid' ? 'Lunas' : 'Belum Lunas' }}</AppBadge></td>
-                <td><button class="text-red-500 text-sm hover:underline" @click="deleteRegistration(registration)">Hapus</button></td>
+                <td><button v-if="can('ramadhan.manage')" class="text-red-500 text-sm hover:underline" @click="deleteRegistration(registration)">Hapus</button></td>
               </tr>
             </tbody>
           </table>
@@ -48,7 +48,7 @@
       </AppCard>
 
       <AppCard title="Distribusi Daging">
-        <template #actions>
+        <template v-if="can('ramadhan.manage')" #actions>
           <button class="text-sm text-primary-600 hover:underline" @click="showDistribute = true">+ Catat Distribusi</button>
         </template>
         <div v-if="distributions.length === 0" class="text-center text-sm text-[var(--text-muted)] py-8">Belum ada distribusi.</div>
@@ -101,6 +101,7 @@
 import { ref } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon, FileText as FileTextIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -117,6 +118,8 @@ const props = defineProps({
   jamaahOptions: { type: Array, default: () => [] },
   summary: { type: Object, required: true },
 })
+
+const { can } = usePermission()
 
 const showAdd = ref(false)
 const addForm = useForm({ shohibul_name: '', phone: '', animal_type: 'kambing', share_count: 1, animal_name: '', payment_status: 'pending' })

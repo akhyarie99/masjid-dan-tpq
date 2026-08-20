@@ -5,7 +5,7 @@
     <PageHeader title="Proyek Pembangunan" description="Pantau progres fisik dan dana proyek pembangunan masjid.">
       <template #actions>
         <Link :href="route('admin.wakaf.index')" class="btn-secondary">Data Wakaf</Link>
-        <Link :href="route('admin.wakaf.proyek.create')" class="btn-primary"><PlusIcon class="w-4 h-4" /> Buat Proyek</Link>
+        <Link v-if="can('wakaf.manage')" :href="route('admin.wakaf.proyek.create')" class="btn-primary"><PlusIcon class="w-4 h-4" /> Buat Proyek</Link>
       </template>
     </PageHeader>
 
@@ -47,6 +47,7 @@
 <script setup>
 import { Head, Link } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
@@ -55,6 +56,8 @@ import EmptyState from '@/Components/Shared/EmptyState.vue'
 defineProps({
   projects: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 function statusLabel(status) {
   return { planning: 'Perencanaan', ongoing: 'Berjalan', completed: 'Selesai' }[status] ?? status

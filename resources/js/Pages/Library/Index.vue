@@ -5,7 +5,7 @@
     <PageHeader title="Perpustakaan" description="Katalog buku masjid.">
       <template #actions>
         <Link :href="route('admin.library.loans.index')" class="btn-secondary">Peminjaman</Link>
-        <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Buku</AppButton>
+        <AppButton v-if="can('library.manage')" @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Buku</AppButton>
       </template>
     </PageHeader>
 
@@ -26,7 +26,7 @@
         <p class="font-medium text-[var(--text-primary)] truncate">{{ book.title }}</p>
         <p class="text-xs text-[var(--text-muted)] truncate">{{ book.author ?? '-' }}</p>
         <p class="text-xs text-[var(--text-muted)] mt-1">Stok: {{ book.stock - book.active_loans_count }}/{{ book.stock }}</p>
-        <button class="text-primary-600 text-sm hover:underline mt-2" @click="openEdit(book)">Edit</button>
+        <button v-if="can('library.manage')" class="text-primary-600 text-sm hover:underline mt-2" @click="openEdit(book)">Edit</button>
       </div>
     </div>
 
@@ -63,6 +63,7 @@
 import { reactive, ref, watch } from 'vue'
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -78,6 +79,8 @@ const props = defineProps({
   filters: { type: Object, default: () => ({}) },
   categories: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const filters = reactive({ search: props.filters.search ?? '', category: props.filters.category ?? '' })
 

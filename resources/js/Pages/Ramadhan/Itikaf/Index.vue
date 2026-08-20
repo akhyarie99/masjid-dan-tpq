@@ -3,7 +3,7 @@
 
   <AdminLayout title="I'tikaf">
     <PageHeader title="Pendaftaran I'tikaf" description="Kelola pendaftaran itikaf 10 hari terakhir Ramadhan.">
-      <template #actions>
+      <template v-if="can('ramadhan.manage')" #actions>
         <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Pendaftar</AppButton>
       </template>
     </PageHeader>
@@ -21,7 +21,7 @@
               <td>{{ registration.phone }}</td>
               <td>{{ formatDate(registration.start_date) }} — {{ formatDate(registration.end_date) }}</td>
               <td><AppBadge :variant="statusVariant(registration.status)">{{ statusLabel(registration.status) }}</AppBadge></td>
-              <td><button class="text-primary-600 text-sm hover:underline" @click="openEdit(registration)">Edit</button></td>
+              <td><button v-if="can('ramadhan.manage')" class="text-primary-600 text-sm hover:underline" @click="openEdit(registration)">Edit</button></td>
             </tr>
           </tbody>
         </table>
@@ -55,6 +55,7 @@ import { ref } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -67,6 +68,8 @@ import AppButton from '@/Components/UI/AppButton.vue'
 defineProps({
   registrations: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const showModal = ref(false)
 const editing = ref(null)

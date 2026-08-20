@@ -28,15 +28,20 @@
     </nav>
 
     <div class="border-t border-[var(--border)] p-3">
-      <div class="flex items-center gap-3 px-2 py-2">
-        <div class="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-sm shrink-0">
-          {{ userInitial }}
+      <Link
+        v-if="route().has('profile.show')"
+        :href="route('profile.show')"
+        class="flex items-center gap-3 px-2 py-2 rounded-lg hover:bg-primary-50 dark:hover:bg-primary-900/20 transition-colors"
+      >
+        <div class="w-9 h-9 rounded-full bg-primary-100 dark:bg-primary-900/40 flex items-center justify-center text-primary-700 dark:text-primary-300 font-semibold text-sm shrink-0 overflow-hidden">
+          <img v-if="user?.avatar_url" :src="user.avatar_url" alt="Foto profil" class="w-full h-full object-cover" />
+          <span v-else>{{ userInitial }}</span>
         </div>
         <div class="min-w-0 flex-1">
           <p class="text-sm font-medium text-[var(--text-primary)] truncate">{{ user?.name }}</p>
           <p class="text-xs text-[var(--text-muted)] truncate">{{ roleLabel }}</p>
         </div>
-      </div>
+      </Link>
       <Link
         v-if="route().has('logout')"
         :href="route('logout')"
@@ -89,10 +94,10 @@ const items = [
   { label: 'Kegiatan', route: 'admin.activity.calendar', icon: CalendarDays, permission: 'activity.view' },
   { label: 'Shalat & Imam', route: 'admin.prayer.schedule', icon: Clock, permission: 'prayer.view' },
   { label: 'Zakat', route: 'admin.finance.zakat.index', icon: HandCoins, permission: 'finance.view', match: ['admin.finance.zakat.*'] },
-  { label: 'Kajian', route: 'admin.study.sesi.index', icon: BookOpen, permission: null, match: ['admin.study.sesi.*', 'admin.study.anggota.*'] },
-  { label: 'Majelis Taklim', route: 'admin.study.majelis.index', icon: BookOpen, permission: null, match: ['admin.study.majelis.*'] },
+  { label: 'Kajian', route: 'admin.study.sesi.index', icon: BookOpen, permission: 'study.view', match: ['admin.study.sesi.*'] },
+  { label: 'Majelis Taklim', route: 'admin.study.majelis.index', icon: BookOpen, permission: 'study.view', match: ['admin.study.majelis.*'] },
   { label: 'TPQ', route: 'admin.tpq.dashboard', icon: GraduationCap, permission: 'tpq.view' },
-  { label: 'Presensi Staf', route: 'admin.staff-attendance.index', icon: FingerprintIcon, permission: null },
+  { label: 'Presensi Staf', route: 'admin.staff-attendance.index', icon: FingerprintIcon, permission: 'staff-attendance.view-own' },
   {
     label: 'Jamaah',
     route: 'admin.jamaah.index',
@@ -106,11 +111,11 @@ const items = [
   },
   { label: 'Program Sosial', route: 'admin.jamaah.program-sosial.index', icon: HandHeart, permission: 'jamaah.view', match: ['admin.jamaah.program-sosial.*'] },
   { label: 'Broadcast WA', route: 'admin.jamaah.broadcast', icon: MessageCircle, permission: 'jamaah.view', match: ['admin.jamaah.broadcast*'] },
-  { label: 'Ramadhan', route: 'admin.ramadhan.index', icon: RamadhanIcon, permission: null },
-  { label: 'Wakaf', route: 'admin.wakaf.index', icon: Building2, permission: null },
-  { label: 'Perpustakaan', route: 'admin.library.index', icon: LibraryIcon, permission: null },
+  { label: 'Ramadhan', route: 'admin.ramadhan.index', icon: RamadhanIcon, permission: 'ramadhan.view' },
+  { label: 'Wakaf', route: 'admin.wakaf.index', icon: Building2, permission: 'wakaf.view' },
+  { label: 'Perpustakaan', route: 'admin.library.index', icon: LibraryIcon, permission: 'library.view' },
   { label: 'Laporan', route: 'admin.report.finance', icon: FileBarChart, permission: 'report.view' },
-  { label: 'Pengumuman', route: 'pengumuman.index', icon: Megaphone, permission: null },
+  { label: 'Pengumuman', route: 'pengumuman.index', icon: Megaphone, permission: 'announcement.view' },
   { label: 'Pengaturan', route: 'admin.settings.index', icon: Settings, permission: 'settings.manage' },
 ]
 

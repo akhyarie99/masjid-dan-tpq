@@ -5,7 +5,7 @@
     <PageHeader :title="majelis.name" :description="`${members.length} anggota`">
       <template #actions>
         <Link :href="route('admin.study.majelis.index')" class="btn-secondary">Kembali</Link>
-        <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Anggota</AppButton>
+        <AppButton v-if="can('study.manage')" @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Anggota</AppButton>
       </template>
     </PageHeader>
 
@@ -13,7 +13,7 @@
       <AppTable :columns="columns" :rows="members" empty-text="Belum ada anggota.">
         <template #cell-joined_date="{ value }">{{ formatDate(value) }}</template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-2">
+          <div v-if="can('study.manage')" class="flex items-center gap-2">
             <button class="text-primary-600 text-sm hover:underline" @click="openEdit(row)">Edit</button>
             <button class="text-red-500 text-sm hover:underline" @click="destroy(row)">Hapus</button>
           </div>
@@ -44,6 +44,7 @@ import { ref } from 'vue'
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -56,6 +57,8 @@ const props = defineProps({
   majelis: { type: Object, required: true },
   members: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const columns = [
   { key: 'name', label: 'Nama' },

@@ -32,6 +32,9 @@ class User extends Authenticatable
         'fcm_token',
         'is_active',
         'last_login_at',
+        'birth_date',
+        'address',
+        'gender',
     ];
 
     protected $hidden = [
@@ -45,6 +48,7 @@ class User extends Authenticatable
             'password' => 'hashed',
             'is_active' => 'boolean',
             'last_login_at' => 'datetime',
+            'birth_date' => 'date',
         ];
     }
 
@@ -53,8 +57,21 @@ class User extends Authenticatable
         return $this->belongsTo(Masjid::class);
     }
 
+    /**
+     * Bukan asset()/APP_URL — sama seperti Masjid::logoUrl(), di dunia
+     * multi-tenant tiap tenant diakses dari host yang beda-beda, jadi URL
+     * storage harus ikut host request yang sedang berjalan.
+     */
     protected function avatarUrl(): Attribute
     {
-        return Attribute::get(fn () => $this->avatar ? asset('storage/'.$this->avatar) : null);
+        return Attribute::get(function () {
+            if (! $this->avatar) {
+                return null;
+            }
+
+            $root = app()->runningInConsole() ? config('app.url') : request()->getSchemeAndHttpHost();
+
+            return "{$root}/storage/{$this->avatar}";
+        });
     }
 }

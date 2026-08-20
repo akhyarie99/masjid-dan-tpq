@@ -24,15 +24,23 @@ class StaffAttendanceController extends Controller
         $start = Carbon::create($year, $month, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
-        $staff = User::where('masjid_id', $request->user()->masjid_id)
-            ->where('is_active', true)
-            ->orderBy('name')
-            ->get(['id', 'name']);
+        // Tanpa staff-attendance.view-all (mis. ustadz), cuma boleh lihat
+        // presensi diri sendiri — dulu endpoint ini selalu menampilkan SEMUA
+        // staf ke siapa pun yang login, tidak dibedakan per role.
+        $canViewAll = $request->user()->can('staff-attendance.view-all');
 
-        $attendances = StaffAttendance::where('masjid_id', $request->user()->masjid_id)
-            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->get()
-            ->groupBy('user_id');
+        $staffQuery = User::where('masjid_id', $request->user()->masjid_id)->where('is_active', true);
+        if (! $canViewAll) {
+            $staffQuery->where('id', $request->user()->id);
+        }
+        $staff = $staffQuery->orderBy('name')->get(['id', 'name']);
+
+        $attendanceQuery = StaffAttendance::where('masjid_id', $request->user()->masjid_id)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
+        if (! $canViewAll) {
+            $attendanceQuery->where('user_id', $request->user()->id);
+        }
+        $attendances = $attendanceQuery->get()->groupBy('user_id');
 
         $recap = $staff->map(function (User $user) use ($attendances, $start, $end) {
             $records = $attendances->get($user->id, collect());
@@ -60,6 +68,7 @@ class StaffAttendanceController extends Controller
             'month' => (int) $month,
             'year' => (int) $year,
             'recap' => $recap->values(),
+            'isOwnOnly' => ! $canViewAll,
         ]);
     }
 
@@ -71,9 +80,14 @@ class StaffAttendanceController extends Controller
         $start = Carbon::create($year, $month, 1)->startOfMonth();
         $end = $start->copy()->endOfMonth();
 
-        $records = StaffAttendance::where('masjid_id', $request->user()->masjid_id)
-            ->whereBetween('date', [$start->toDateString(), $end->toDateString()])
-            ->with(['user:id,name', 'clockInLocation:id,name', 'clockOutLocation:id,name'])
+        $recordsQuery = StaffAttendance::where('masjid_id', $request->user()->masjid_id)
+            ->whereBetween('date', [$start->toDateString(), $end->toDateString()]);
+
+        if (! $request->user()->can('staff-attendance.view-all')) {
+            $recordsQuery->where('user_id', $request->user()->id);
+        }
+
+        $records = $recordsQuery->with(['user:id,name', 'clockInLocation:id,name', 'clockOutLocation:id,name'])
             ->orderBy('date')
             ->get();
 
@@ -83,6 +97,10 @@ class StaffAttendanceController extends Controller
     public function detail(Request $request, StaffAttendance $attendance): JsonResponse
     {
         abort_unless($attendance->masjid_id === $request->user()->masjid_id, 403);
+        abort_unless(
+            $attendance->user_id === $request->user()->id || $request->user()->can('staff-attendance.view-all'),
+            403
+        );
 
         $attendance->load(['user:id,name', 'clockInLocation:id,name', 'clockOutLocation:id,name']);
 
@@ -113,6 +131,10 @@ class StaffAttendanceController extends Controller
     public function photo(Request $request, StaffAttendance $attendance, string $type): \Symfony\Component\HttpFoundation\Response
     {
         abort_unless($attendance->masjid_id === $request->user()->masjid_id, 403);
+        abort_unless(
+            $attendance->user_id === $request->user()->id || $request->user()->can('staff-attendance.view-all'),
+            403
+        );
         abort_unless(in_array($type, ['masuk', 'pulang']), 404);
 
         $path = $type === 'masuk' ? $attendance->clock_in_photo : $attendance->clock_out_photo;

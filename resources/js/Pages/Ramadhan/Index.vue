@@ -3,7 +3,7 @@
 
   <AdminLayout title="Ramadhan">
     <PageHeader title="Mode Ramadhan & Imsakiyah" :description="`Perkiraan Ramadhan ${ramadhanYear} H: ${formatDate(period.start)} — ${formatDate(period.end)}`">
-      <template #actions>
+      <template v-if="can('ramadhan.manage')" #actions>
         <AppButton :loading="generating" @click="generate"><RefreshCwIcon class="w-4 h-4" /> Generate Imsakiyah</AppButton>
       </template>
     </PageHeader>
@@ -70,6 +70,7 @@ import { ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import { RefreshCw as RefreshCwIcon, BookOpen as BookOpenIcon, Moon as MoonIcon, Beef as BeefIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -82,6 +83,8 @@ defineProps({
   period: { type: Object, required: true },
   imsakiyah: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const generating = ref(false)
 

@@ -16,10 +16,13 @@ class TpqGradeTest extends TestCase
 {
     use InteractsWithMasjid, RefreshDatabase;
 
-    public function test_ustadz_can_input_grade_and_letter_is_calculated(): void
+    public function test_admin_can_input_grade_and_letter_is_calculated(): void
     {
+        // Sengaja pakai 'admin', bukan 'ustadz' — sejak pembatasan role ustadz
+        // (hanya TPQ > Harian), input nilai reguler jadi kewenangan tpq.grade
+        // (tidak diberikan ke ustadz), ustadz mencatat progres lewat Harian.
         $masjid = $this->createMasjid();
-        $user = $this->createUser($masjid, 'ustadz');
+        $user = $this->createUser($masjid, 'admin');
 
         $year = TpqAcademicYear::create([
             'masjid_id' => $masjid->id, 'name' => '2026/2027',

@@ -3,7 +3,7 @@
 
   <AdminLayout title="Kajian Rutin">
     <PageHeader title="Kajian Rutin" description="Kelola jadwal kajian rutin masjid.">
-      <template #actions>
+      <template v-if="can('study.manage')" #actions>
         <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Sesi</AppButton>
       </template>
     </PageHeader>
@@ -19,7 +19,7 @@
         <p class="text-xs text-[var(--text-muted)] mt-2">
           {{ dayLabel(session.day_of_week) }}{{ session.time ? ` · ${session.time.slice(0,5)}` : '' }} · {{ session.location }}
         </p>
-        <button class="text-primary-600 text-sm hover:underline mt-3" @click="openEdit(session)">Edit</button>
+        <button v-if="can('study.manage')" class="text-primary-600 text-sm hover:underline mt-3" @click="openEdit(session)">Edit</button>
       </div>
     </div>
 
@@ -52,6 +52,7 @@
 import { ref } from 'vue'
 import { Head, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
@@ -64,6 +65,8 @@ import EmptyState from '@/Components/Shared/EmptyState.vue'
 defineProps({
   sessions: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const dayOptions = [
   { label: 'Senin', value: 'senin' }, { label: 'Selasa', value: 'selasa' }, { label: 'Rabu', value: 'rabu' },

@@ -3,7 +3,7 @@
 
   <AdminLayout title="Tracker Khatam Quran">
     <PageHeader title="Tracker Khatam Al-Quran" :description="`${summary.completed} dari ${summary.total} peserta sudah khatam — ${year}`">
-      <template #actions>
+      <template v-if="can('ramadhan.manage')" #actions>
         <AppButton @click="showAdd = true"><PlusIcon class="w-4 h-4" /> Tambah Peserta</AppButton>
       </template>
     </PageHeader>
@@ -47,6 +47,7 @@
 import { ref } from 'vue'
 import { Head, router, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
@@ -60,6 +61,8 @@ const props = defineProps({
   trackers: { type: Array, default: () => [] },
   summary: { type: Object, required: true },
 })
+
+const { can } = usePermission()
 
 const showAdd = ref(false)
 const addForm = useForm({ participant_name: '', phone: '' })

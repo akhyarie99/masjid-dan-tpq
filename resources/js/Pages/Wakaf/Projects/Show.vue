@@ -5,8 +5,8 @@
     <PageHeader :title="project.name">
       <template #actions>
         <button class="btn-secondary" @click="copyShareLink"><Share2Icon class="w-4 h-4" /> {{ copied ? 'Tersalin!' : 'Bagikan ke Donatur' }}</button>
-        <Link :href="route('admin.wakaf.proyek.edit', project.id)" class="btn-secondary">Edit</Link>
-        <AppButton @click="showAddUpdate = true"><PlusIcon class="w-4 h-4" /> Tambah Update</AppButton>
+        <Link v-if="can('wakaf.manage')" :href="route('admin.wakaf.proyek.edit', project.id)" class="btn-secondary">Edit</Link>
+        <AppButton v-if="can('wakaf.manage')" @click="showAddUpdate = true"><PlusIcon class="w-4 h-4" /> Tambah Update</AppButton>
       </template>
     </PageHeader>
 
@@ -77,6 +77,7 @@ import { ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import { Plus as PlusIcon, Share2 as Share2Icon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -88,6 +89,8 @@ import EmptyState from '@/Components/Shared/EmptyState.vue'
 const props = defineProps({
   project: { type: Object, required: true },
 })
+
+const { can } = usePermission()
 
 const showAddUpdate = ref(false)
 const copied = ref(false)

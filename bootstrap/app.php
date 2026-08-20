@@ -9,6 +9,7 @@ use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Support\Facades\Cache;
+use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
@@ -41,6 +42,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'auth.wali' => AuthenticateWali::class,
             'auth.platform' => AuthenticatePlatformAdmin::class,
             'role' => RoleMiddleware::class,
+            'permission' => PermissionMiddleware::class,
         ]);
 
         // TrustHosts nonaktif secara default; diaktifkan di sini supaya URL

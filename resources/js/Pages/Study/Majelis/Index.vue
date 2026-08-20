@@ -3,7 +3,7 @@
 
   <AdminLayout title="Majelis Taklim">
     <PageHeader title="Majelis Taklim" description="Kelola kelompok majelis taklim masjid.">
-      <template #actions>
+      <template v-if="can('study.manage')" #actions>
         <AppButton @click="openCreate"><PlusIcon class="w-4 h-4" /> Tambah Majelis</AppButton>
       </template>
     </PageHeader>
@@ -19,7 +19,7 @@
         <p class="text-xs text-[var(--text-muted)] mt-1">{{ majelis.members_count }} anggota</p>
         <div class="flex items-center gap-3 mt-3">
           <Link :href="route('admin.study.majelis.show', majelis.id)" class="text-primary-600 text-sm hover:underline">Kelola Anggota</Link>
-          <button class="text-primary-600 text-sm hover:underline" @click="openEdit(majelis)">Edit</button>
+          <button v-if="can('study.manage')" class="text-primary-600 text-sm hover:underline" @click="openEdit(majelis)">Edit</button>
         </div>
       </div>
     </div>
@@ -56,6 +56,7 @@
 import { ref } from 'vue'
 import { Head, Link, useForm } from '@inertiajs/vue3'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppBadge from '@/Components/UI/AppBadge.vue'
@@ -67,6 +68,8 @@ import EmptyState from '@/Components/Shared/EmptyState.vue'
 defineProps({
   majelisList: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const showModal = ref(false)
 const editing = ref(null)

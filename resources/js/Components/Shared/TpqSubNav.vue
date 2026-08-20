@@ -17,23 +17,31 @@
 <script setup>
 import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
+import { usePermission } from '@/composables/usePermission'
 
+const { can } = usePermission()
+
+// Tahun Ajaran/Semester/Kelas/SPP/Sertifikat/Pengaturan sengaja digerbang
+// tpq.manage (bukan tpq.view) — ini area konfigurasi TPQ, ustadz tidak
+// perlu (dan tidak boleh) melihatnya sama sekali, cukup "Harian".
 const items = [
-  { label: 'Dashboard', route: 'admin.tpq.dashboard' },
-  { label: 'Tahun Ajaran', route: 'admin.tpq.tahun-ajaran.index' },
-  { label: 'Semester', route: 'admin.tpq.semester.index' },
-  { label: 'Kelas', route: 'admin.tpq.kelas.index' },
-  { label: 'Data Santri', route: 'admin.tpq.santri.index' },
-  { label: 'Absensi', route: 'admin.tpq.attendance.index' },
-  { label: 'Harian', route: 'admin.tpq.daily-progress.index' },
-  { label: 'Nilai', route: 'admin.tpq.grade.index' },
-  { label: 'Raport', route: 'admin.tpq.report.index' },
-  { label: 'SPP', route: 'admin.tpq.spp.index' },
-  { label: 'Sertifikat', route: 'admin.tpq.sertifikat.index' },
-  { label: 'Pengaturan', route: 'admin.tpq.pengaturan.edit' },
+  { label: 'Dashboard', route: 'admin.tpq.dashboard', permission: 'tpq.view' },
+  { label: 'Tahun Ajaran', route: 'admin.tpq.tahun-ajaran.index', permission: 'tpq.manage' },
+  { label: 'Semester', route: 'admin.tpq.semester.index', permission: 'tpq.manage' },
+  { label: 'Kelas', route: 'admin.tpq.kelas.index', permission: 'tpq.manage' },
+  { label: 'Data Santri', route: 'admin.tpq.santri.index', permission: 'tpq.view' },
+  { label: 'Absensi', route: 'admin.tpq.attendance.index', permission: 'tpq.view' },
+  { label: 'Harian', route: 'admin.tpq.daily-progress.index', permission: 'tpq.daily-progress.view' },
+  { label: 'Nilai', route: 'admin.tpq.grade.index', permission: 'tpq.grade' },
+  { label: 'Raport', route: 'admin.tpq.report.index', permission: 'tpq.report' },
+  { label: 'SPP', route: 'admin.tpq.spp.index', permission: 'tpq.manage' },
+  { label: 'Sertifikat', route: 'admin.tpq.sertifikat.index', permission: 'tpq.manage' },
+  { label: 'Pengaturan', route: 'admin.tpq.pengaturan.edit', permission: 'tpq.manage' },
 ]
 
-const visibleItems = computed(() => items.filter((item) => route().has(item.route)))
+const visibleItems = computed(() =>
+  items.filter((item) => route().has(item.route) && can(item.permission))
+)
 
 function isActive(routeName) {
   return route().current(`${routeName.split('.').slice(0, 3).join('.')}*`)

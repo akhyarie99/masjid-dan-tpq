@@ -3,7 +3,7 @@
 
   <AdminLayout title="Pengumuman">
     <PageHeader title="Pengumuman" description="Kelola pengumuman untuk portal publik dan jamaah.">
-      <template #actions>
+      <template v-if="can('announcement.manage')" #actions>
         <Link :href="route('pengumuman.create')" class="btn-primary"><PlusIcon class="w-4 h-4" /> Buat Pengumuman</Link>
       </template>
     </PageHeader>
@@ -14,7 +14,7 @@
         <template #cell-is_published="{ value }"><AppBadge :variant="value ? 'green' : 'gray'">{{ value ? 'Terbit' : 'Draft' }}</AppBadge></template>
         <template #cell-created_at="{ value }">{{ formatDate(value) }}</template>
         <template #cell-actions="{ row }">
-          <div class="flex items-center gap-2">
+          <div v-if="can('announcement.manage')" class="flex items-center gap-2">
             <Link :href="route('pengumuman.edit', row.id)" class="text-primary-600 text-sm hover:underline">Edit</Link>
             <button class="text-red-500 text-sm hover:underline" @click="deleteTarget = row">Hapus</button>
           </div>
@@ -43,6 +43,7 @@ import { ref } from 'vue'
 import { Head, Link, router } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -54,6 +55,8 @@ import ConfirmDialog from '@/Components/Shared/ConfirmDialog.vue'
 defineProps({
   announcements: { type: Object, required: true },
 })
+
+const { can } = usePermission()
 
 const columns = [
   { key: 'title', label: 'Judul' },

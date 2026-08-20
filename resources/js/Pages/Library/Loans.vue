@@ -5,7 +5,7 @@
     <PageHeader title="Peminjaman Buku" description="Kelola peminjaman dan pengembalian buku perpustakaan.">
       <template #actions>
         <Link :href="route('admin.library.index')" class="btn-secondary">Katalog</Link>
-        <AppButton @click="showModal = true"><PlusIcon class="w-4 h-4" /> Pinjam Buku</AppButton>
+        <AppButton v-if="can('library.manage')" @click="showModal = true"><PlusIcon class="w-4 h-4" /> Pinjam Buku</AppButton>
       </template>
     </PageHeader>
 
@@ -24,7 +24,7 @@
               <td>{{ formatDate(loan.return_date_planned) }}</td>
               <td><AppBadge :variant="statusVariant(loan.status)">{{ statusLabel(loan.status) }}</AppBadge></td>
               <td>
-                <button v-if="loan.status === 'dipinjam'" class="text-primary-600 text-sm hover:underline" @click="returnBook(loan)">Kembalikan</button>
+                <button v-if="loan.status === 'dipinjam' && can('library.manage')" class="text-primary-600 text-sm hover:underline" @click="returnBook(loan)">Kembalikan</button>
               </td>
             </tr>
           </tbody>
@@ -59,6 +59,7 @@ import { ref } from 'vue'
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import dayjs from 'dayjs'
 import { Plus as PlusIcon } from 'lucide-vue-next'
+import { usePermission } from '@/composables/usePermission'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import AppCard from '@/Components/UI/AppCard.vue'
@@ -73,6 +74,8 @@ defineProps({
   loans: { type: Object, required: true },
   books: { type: Array, default: () => [] },
 })
+
+const { can } = usePermission()
 
 const showModal = ref(false)
 const form = useForm({ book_id: '', borrower_name: '', borrower_phone: '', loan_date: new Date().toISOString().slice(0, 10), return_date_planned: '' })
