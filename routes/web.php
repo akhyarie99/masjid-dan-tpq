@@ -283,6 +283,9 @@ Route::middleware(['auth'])->group(function () {
         // Presensi Staf (rekap kehadiran ustadz/ustadzah, direkam lewat app mobile)
         Route::prefix('presensi-staf')->name('staff-attendance.')->group(function () {
             Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
+            Route::get('export', [StaffAttendanceController::class, 'export'])->name('export');
+            Route::get('{attendance}/detail', [StaffAttendanceController::class, 'detail'])->name('detail');
+            Route::get('{attendance}/foto/{type}', [StaffAttendanceController::class, 'photo'])->name('photo');
         });
 
         // Jamaah
