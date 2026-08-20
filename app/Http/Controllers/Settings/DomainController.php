@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -31,6 +32,11 @@ class DomainController extends Controller
             'custom_domain_verified_at' => null,
         ]);
 
+        // TrustHosts di bootstrap/app.php cache daftar custom_domain terverifikasi
+        // 5 menit — kalau domain lama sempat terverifikasi lalu diganti di sini,
+        // domain lama itu harus langsung berhenti dipercaya, bukan nunggu TTL habis.
+        Cache::forget('trusted-custom-domains');
+
         return back()->with('success', 'Domain disimpan. Pasang DNS TXT record di bawah, lalu klik "Verifikasi".');
     }
 
@@ -52,6 +58,13 @@ class DomainController extends Controller
         }
 
         $masjid->update(['custom_domain_verified_at' => now()]);
+
+        // Tanpa ini, domain yang baru saja diverifikasi tetap ditolak TrustHosts
+        // (bootstrap/app.php) sampai 5 menit berlalu — pernah terjadi persis
+        // begini saat testing: verify sukses, tapi domainnya langsung kena
+        // "400 Bad request" begitu diakses karena cache trusted-hosts belum
+        // ikut update.
+        Cache::forget('trusted-custom-domains');
 
         // Verifikasi kepemilikan domain (TXT record) sudah cukup untuk menandai
         // status "terverifikasi", tapi domainnya belum benar-benar melayani
