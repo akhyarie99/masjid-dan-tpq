@@ -5,6 +5,8 @@ namespace App\Http\Controllers\Settings;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -40,10 +42,10 @@ class DomainController extends Controller
             return back()->with('error', 'Belum ada domain yang diatur.');
         }
 
-        $records = dns_get_record("_tpq-verify.{$masjid->custom_domain}", DNS_TXT) ?: [];
         $expected = "tpq-verify={$masjid->custom_domain_verification_token}";
+        $host = "_tpq-verify.{$masjid->custom_domain}";
 
-        $verified = collect($records)->contains(fn ($record) => ($record['txt'] ?? null) === $expected);
+        $verified = $this->txtRecordContains($host, $expected);
 
         if (! $verified) {
             return back()->with('error', "Belum terverifikasi. Pastikan DNS TXT record _tpq-verify.{$masjid->custom_domain} berisi \"{$expected}\" sudah aktif (propagasi DNS bisa sampai 24 jam).");
@@ -57,5 +59,37 @@ class DomainController extends Controller
         // di server (bikin vhost Nginx + terbitkan sertifikat SSL) — lihat
         // docs/multi-tenancy-limitations.md. Bukan proses instan/self-service.
         return back()->with('success', 'Domain terverifikasi. Tim kami akan mengaktifkan domain Anda dalam 1x24 jam.');
+    }
+
+    /**
+     * Query DNS-over-HTTPS (Google) dulu, bukan resolver lokal server —
+     * resolver lokal (systemd-resolved dsb) pernah terbukti lambat sinkron ke
+     * nameserver registrar tertentu meski record-nya sudah aktif secara
+     * publik, bikin verifikasi gagal terus padahal DNS-nya sudah benar.
+     * Fallback ke dns_get_record() bawaan PHP kalau permintaan HTTP gagal
+     * (mis. Google DoH down) supaya verifikasi tidak macet total.
+     */
+    private function txtRecordContains(string $host, string $expected): bool
+    {
+        try {
+            $response = Http::timeout(5)->get('https://dns.google/resolve', [
+                'name' => $host,
+                'type' => 'TXT',
+            ]);
+
+            if ($response->ok()) {
+                $answers = collect($response->json('Answer', []))
+                    ->pluck('data')
+                    ->map(fn ($txt) => trim($txt, '"'));
+
+                return $answers->contains($expected);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Domain verify: DNS-over-HTTPS gagal, fallback ke resolver lokal.', ['error' => $e->getMessage()]);
+        }
+
+        $records = dns_get_record($host, DNS_TXT) ?: [];
+
+        return collect($records)->contains(fn ($record) => ($record['txt'] ?? null) === $expected);
     }
 }

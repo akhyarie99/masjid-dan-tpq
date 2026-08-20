@@ -58,7 +58,7 @@ import {
   LayoutDashboard, Wallet, Boxes, CalendarDays, Clock, BookOpen,
   GraduationCap, Users, Moon as RamadhanIcon, Building2, FileBarChart,
   Settings, Megaphone, LogOut as LogOutIcon, HandCoins, HandHeart, MessageCircle,
-  Library as LibraryIcon,
+  Library as LibraryIcon, Fingerprint as FingerprintIcon,
 } from 'lucide-vue-next'
 import { usePermission } from '@/composables/usePermission'
 
@@ -92,6 +92,7 @@ const items = [
   { label: 'Kajian', route: 'admin.study.sesi.index', icon: BookOpen, permission: null, match: ['admin.study.sesi.*', 'admin.study.anggota.*'] },
   { label: 'Majelis Taklim', route: 'admin.study.majelis.index', icon: BookOpen, permission: null, match: ['admin.study.majelis.*'] },
   { label: 'TPQ', route: 'admin.tpq.dashboard', icon: GraduationCap, permission: 'tpq.view' },
+  { label: 'Presensi Staf', route: 'admin.staff-attendance.index', icon: FingerprintIcon, permission: null },
   {
     label: 'Jamaah',
     route: 'admin.jamaah.index',

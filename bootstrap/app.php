@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\AuthenticatePlatformAdmin;
 use App\Http\Middleware\AuthenticateWali;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\ResolveTenant;
@@ -38,6 +39,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'auth.wali' => AuthenticateWali::class,
+            'auth.platform' => AuthenticatePlatformAdmin::class,
             'role' => RoleMiddleware::class,
         ]);
 

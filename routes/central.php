@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Central\PlatformAdminController;
 use App\Http\Controllers\Central\RegistrationController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -9,6 +10,18 @@ Route::get('/', fn () => Inertia::render('Central/Landing'))->name('central.home
 
 Route::get('/daftar', [RegistrationController::class, 'showForm'])->name('central.register');
 Route::middleware('throttle:6,1')->post('/daftar', [RegistrationController::class, 'store'])->name('central.register.store');
+
+// === SUPERADMIN PLATFORM (kelola semua tenant, hanya bisa diakses dari domain pusat) ===
+Route::prefix('platform-admin')->name('platform-admin.')->group(function () {
+    Route::get('/login', [PlatformAdminController::class, 'showLogin'])->name('login');
+    Route::middleware('throttle:6,1')->post('/login', [PlatformAdminController::class, 'login']);
+
+    Route::middleware('auth.platform')->group(function () {
+        Route::post('/logout', [PlatformAdminController::class, 'logout'])->name('logout');
+        Route::get('/dashboard', [PlatformAdminController::class, 'dashboard'])->name('dashboard');
+        Route::post('/tenant/{tenant}/toggle-active', [PlatformAdminController::class, 'toggleActive'])->name('tenant.toggle-active');
+    });
+});
 
 // === REDIRECT SEMENTARA UNTUK LINK/QR LAMA (dari sebelum root domain jadi hub SaaS) ===
 // Khusus tenant pertama yang dulunya live langsung di root domain — QR code fisik

@@ -36,6 +36,7 @@ use App\Http\Controllers\Settings\DomainController;
 use App\Http\Controllers\Settings\MasjidLocationController;
 use App\Http\Controllers\Settings\SettingController;
 use App\Http\Controllers\Settings\UserController;
+use App\Http\Controllers\Staff\StaffAttendanceController;
 use App\Http\Controllers\Study\MajelisAnggotaController;
 use App\Http\Controllers\Study\MajelisController;
 use App\Http\Controllers\Study\StudySessionController;
@@ -277,6 +278,11 @@ Route::middleware(['auth'])->group(function () {
             });
 
             Route::resource('sertifikat', TpqCertificateController::class)->only(['index', 'create', 'store', 'destroy']);
+        });
+
+        // Presensi Staf (rekap kehadiran ustadz/ustadzah, direkam lewat app mobile)
+        Route::prefix('presensi-staf')->name('staff-attendance.')->group(function () {
+            Route::get('/', [StaffAttendanceController::class, 'index'])->name('index');
         });
 
         // Jamaah
