@@ -46,7 +46,41 @@ otorisasi server), yang memang disengaja untuk ticker donasi yang publik,
 tapi perlu dipastikan tetap sesuai keinginan di dunia multi-tenant (siapa pun
 yang tahu `masjid_id` tenant lain bisa subscribe ke channel donasi mereka).
 
-## 4. Aplikasi mobile (Flutter, staf/ustadz) belum multi-tenant
+## 4. Custom domain tenant TIDAK aktif otomatis — perlu 1 perintah manual
+
+Server produksi (`tpq.smartedugame.com`) adalah VPS bersama yang juga
+melayani ~25 aplikasi lain lewat Nginx yang sama (HRM, sekolahterbaik,
+koperasi, waresponder, dst). Karena itu, rancangan awal (Caddy mengambil
+alih port 80/443, atau Caddy + Nginx *stream* passthrough berbasis SNI)
+DIBATALKAN — keduanya berisiko mengganggu ke-25 aplikasi lain itu.
+
+Yang dipakai sebagai gantinya:
+- **Subdomain tenant** (`{slug}.tpq.smartedugame.com`) otomatis penuh — satu
+  vhost Nginx `tpq` dengan `server_name` wildcard, satu sertifikat SSL SAN
+  (bukan wildcard cert) yang diperluas otomatis lewat cron
+  (`deploy/sync-subdomain-certs.sh`, jalan tiap 30 menit, baca daftar tenant
+  aktif dari `php artisan tenants:domains`). Tidak butuh akses API DNS
+  provider apa pun.
+- **Custom domain tenant** (mis. `tpqnurulhuda.com`) TIDAK otomatis. Setelah
+  tenant memverifikasi kepemilikan domainnya (DNS TXT record, lewat menu
+  Pengaturan > Alamat Portal), admin platform (bukan tenant) harus login ke
+  server dan jalankan:
+  ```
+  bash deploy/add-custom-domain.sh tpqnurulhuda.com
+  ```
+  Script ini membuat 1 vhost Nginx baru (identik dengan vhost `tpq`, cuma
+  beda `server_name`) + menerbitkan sertifikat SSL lewat Certbot biasa —
+  pola yang sama persis dengan 24 aplikasi lain di server ini, jadi tidak
+  menyentuh konfigurasi global Nginx sama sekali.
+
+**Cara tahu ada domain yang menunggu diaktifkan**: cek tenant mana yang
+`custom_domain_verified_at` terisi tapi belum ada file
+`/etc/nginx/sites-enabled/tpq-custom-{domain}` di server:
+```
+php artisan tinker --execute="App\Models\Masjid::whereNotNull('custom_domain_verified_at')->pluck('custom_domain')->each(fn(\$d) => print(\$d.PHP_EOL));"
+```
+
+## 5. Aplikasi mobile (Flutter, staf/ustadz) belum multi-tenant
 
 Endpoint API (`MobileAuthController`) sudah di-scope tenant lewat
 `ResolveTenant` middleware + host request, tapi app Flutter yang sudah ada

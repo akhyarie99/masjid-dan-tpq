@@ -51,6 +51,11 @@ class DomainController extends Controller
 
         $masjid->update(['custom_domain_verified_at' => now()]);
 
-        return back()->with('success', 'Domain berhasil diverifikasi dan aktif.');
+        // Verifikasi kepemilikan domain (TXT record) sudah cukup untuk menandai
+        // status "terverifikasi", tapi domainnya belum benar-benar melayani
+        // trafik sampai admin platform menjalankan deploy/add-custom-domain.sh
+        // di server (bikin vhost Nginx + terbitkan sertifikat SSL) — lihat
+        // docs/multi-tenancy-limitations.md. Bukan proses instan/self-service.
+        return back()->with('success', 'Domain terverifikasi. Tim kami akan mengaktifkan domain Anda dalam 1x24 jam.');
     }
 }

@@ -94,11 +94,11 @@
           <div v-if="masjid.custom_domain" class="mt-4 p-3 rounded-lg bg-[var(--bg-muted)] text-sm">
             <p class="text-[var(--text-primary)]">
               Status:
-              <span v-if="masjid.custom_domain_verified_at" class="text-green-600 font-medium">Terverifikasi &amp; aktif</span>
+              <span v-if="masjid.custom_domain_verified_at" class="text-green-600 font-medium">Kepemilikan terverifikasi — menunggu diaktifkan tim kami</span>
               <span v-else class="text-amber-600 font-medium">Belum diverifikasi</span>
             </p>
             <template v-if="!masjid.custom_domain_verified_at">
-              <p class="text-[var(--text-muted)] mt-2">Pasang DNS TXT record berikut, lalu klik Verifikasi (propagasi DNS bisa sampai 24 jam):</p>
+              <p class="text-[var(--text-muted)] mt-2">Pasang DNS TXT record berikut, lalu klik Verifikasi (propagasi DNS bisa sampai 24 jam). Setelah terverifikasi, pastikan juga domain ini diarahkan (A record) ke server kami sebelum dihubungi tim untuk aktivasi:</p>
               <code class="block mt-1 p-2 rounded bg-[var(--bg-base)] text-xs break-all">
                 _tpq-verify.{{ masjid.custom_domain }} TXT tpq-verify={{ masjid.custom_domain_verification_token }}
               </code>

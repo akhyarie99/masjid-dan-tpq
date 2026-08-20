@@ -5,6 +5,12 @@ set -euo pipefail
 APP_DIR="/var/www/html/tpq"
 cd "$APP_DIR"
 
+# Kalau ada langkah manapun di bawah yang gagal (mis. supervisor/permission),
+# situs tetap otomatis keluar dari mode maintenance alih-alih macet di 503 —
+# insiden nyata pernah terjadi waktu step lain gagal sebelum "php artisan up"
+# sempat jalan.
+trap 'php artisan up || true' EXIT
+
 echo "==> Mengaktifkan mode maintenance"
 php artisan down --retry=15 || true
 
@@ -34,14 +40,9 @@ sudo supervisorctl reread
 sudo supervisorctl update
 sudo supervisorctl restart all
 
-echo "==> Reload Caddy"
-sudo systemctl reload caddy
-
 echo "==> Perbaikan permission storage"
 sudo chown -R www-data:www-data storage bootstrap/cache
 sudo chmod -R 755 storage bootstrap/cache
 
-echo "==> Menonaktifkan mode maintenance"
-php artisan up
-
+# "php artisan up" dijalankan oleh trap EXIT di atas, tidak perlu dipanggil manual.
 echo "==> Deploy selesai."
