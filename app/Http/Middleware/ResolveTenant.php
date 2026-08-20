@@ -34,6 +34,13 @@ class ResolveTenant
         $centralDomain = strtolower(config('tenancy.central_domain'));
 
         if ($host === $centralDomain || $host === "www.{$centralDomain}") {
+            // Route tanpa Route::domain(central_domain) (mis. /login, /admin/*)
+            // tidak punya batasan domain sama sekali, jadi tetap "match" untuk
+            // host manapun termasuk domain pusat kalau tidak dicegah di sini —
+            // dan kodenya di sisi tenant selalu asumsikan tenant() ada, jadi
+            // harus 404 duluan, bukan biarkan lolos lalu crash null-pointer.
+            abort_unless($request->route()?->getDomain() === $centralDomain, 404);
+
             return $next($request);
         }
 
