@@ -25,6 +25,14 @@
         <ThemeToggle />
 
         <Link
+          v-if="route().has('wali.login')"
+          :href="route('wali.login')"
+          class="btn-secondary !text-xs md:!text-sm"
+        >
+          Portal Wali
+        </Link>
+
+        <Link
           v-if="route().has('login')"
           :href="route('login')"
           class="btn-primary !text-xs md:!text-sm"
