@@ -20,6 +20,14 @@ Route::prefix('platform-admin')->name('platform-admin.')->group(function () {
         Route::post('/logout', [PlatformAdminController::class, 'logout'])->name('logout');
         Route::get('/dashboard', [PlatformAdminController::class, 'dashboard'])->name('dashboard');
         Route::post('/tenant/{tenant}/toggle-active', [PlatformAdminController::class, 'toggleActive'])->name('tenant.toggle-active');
+
+        Route::get('/tenant/{tenant}', [PlatformAdminController::class, 'showTenant'])->name('tenant.show');
+        Route::put('/tenant/{tenant}/fee', [PlatformAdminController::class, 'updateFee'])->name('tenant.fee');
+        Route::post('/tenant/{tenant}/payments', [PlatformAdminController::class, 'storePayment'])->name('tenant.payments.store');
+        Route::delete('/tenant/{tenant}/payments/{payment}', [PlatformAdminController::class, 'destroyPayment'])->name('tenant.payments.destroy');
+
+        Route::get('/pendapatan', [PlatformAdminController::class, 'revenue'])->name('revenue');
+        Route::put('/pengaturan/tarif', [PlatformAdminController::class, 'updateDefaultFee'])->name('settings.fee');
     });
 });
 

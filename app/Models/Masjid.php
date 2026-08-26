@@ -37,6 +37,7 @@ class Masjid extends Model
         'custom_domain_verification_token',
         'subscription_status',
         'theme_color',
+        'monthly_fee',
     ];
 
     protected function casts(): array
@@ -48,7 +49,22 @@ class Masjid extends Model
             'is_active' => 'boolean',
             'iqomah_offset_minutes' => 'integer',
             'custom_domain_verified_at' => 'datetime',
+            'monthly_fee' => 'decimal:2',
         ];
+    }
+
+    /**
+     * Tarif bulanan yang benar-benar berlaku untuk tenant ini — tarif khusus
+     * kalau diisi, kalau tidak jatuh balik ke tarif default platform.
+     */
+    public function effectiveMonthlyFee(): float
+    {
+        return (float) ($this->monthly_fee ?? PlatformSetting::get('default_monthly_fee', '0'));
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(TenantPayment::class);
     }
 
     /**
