@@ -25,6 +25,13 @@ npm run build
 echo "==> Migrasi database"
 php artisan migrate --force
 
+# migrate cuma menerapkan skema — daftar permission per role didefinisikan di
+# sini, bukan lewat migrasi, jadi harus disinkronkan ulang tiap deploy supaya
+# permission baru (atau perubahan mapping role) benar-benar aktif. Aman
+# dijalankan berkali-kali (syncPermissions menggantikan daftar lama).
+echo "==> Sinkronisasi role & permission"
+php artisan db:seed --class=RolePermissionSeeder --force
+
 echo "==> Membersihkan & menyusun cache konfigurasi"
 php artisan config:clear
 php artisan config:cache
