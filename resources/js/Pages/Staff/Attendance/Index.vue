@@ -23,7 +23,7 @@
         <table class="table">
           <thead>
             <tr>
-              <th class="sticky left-0 bg-[var(--bg-muted)]">Staf</th>
+              <th class="sticky left-0 z-10 bg-[var(--bg-muted)]">Staf</th>
               <th v-for="day in daysInMonth" :key="day" class="text-center !px-2">{{ day }}</th>
               <th class="text-center">Hadir</th>
               <th class="text-center">Lengkap</th>
@@ -32,7 +32,7 @@
           </thead>
           <tbody>
             <tr v-for="row in recap" :key="row.user.id">
-              <td class="sticky left-0 bg-[var(--bg-surface)] whitespace-nowrap">{{ row.user.name }}</td>
+              <td class="sticky left-0 z-10 bg-[var(--bg-surface)] whitespace-nowrap">{{ row.user.name }}</td>
               <td v-for="day in daysInMonth" :key="day" class="text-center !px-1">
                 <button
                   type="button"
