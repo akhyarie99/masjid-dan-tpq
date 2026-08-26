@@ -350,9 +350,9 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('kelas/{kela}', [TpqClassController::class, 'destroy'])->name('kelas.destroy');
                 Route::get('santri/create', [TpqStudentController::class, 'create'])->name('santri.create');
                 Route::post('santri', [TpqStudentController::class, 'store'])->name('santri.store');
-                Route::get('santri/{student}/edit', [TpqStudentController::class, 'edit'])->name('santri.edit');
-                Route::put('santri/{student}', [TpqStudentController::class, 'update'])->name('santri.update');
-                Route::delete('santri/{student}', [TpqStudentController::class, 'destroy'])->name('santri.destroy');
+                Route::get('santri/{santri}/edit', [TpqStudentController::class, 'edit'])->name('santri.edit');
+                Route::put('santri/{santri}', [TpqStudentController::class, 'update'])->name('santri.update');
+                Route::delete('santri/{santri}', [TpqStudentController::class, 'destroy'])->name('santri.destroy');
                 Route::get('santri/import/template', [TpqStudentController::class, 'importTemplate'])->name('santri.import-template');
                 Route::post('santri/import', [TpqStudentController::class, 'import'])->name('santri.import');
                 Route::post('santri/{santri}/reset-password-wali', [TpqStudentController::class, 'resetWaliPassword'])->name('santri.reset-wali-password');
