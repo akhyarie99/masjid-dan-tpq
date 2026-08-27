@@ -80,6 +80,8 @@ class PlatformAdminController extends Controller
                 'monthly_fee' => $masjid->effectiveMonthlyFee(),
                 'has_custom_fee' => $masjid->monthly_fee !== null,
                 'paid_this_month' => in_array($masjid->id, $paidTenantIds, true),
+                'active_until' => $masjid->active_until?->toDateString(),
+                'is_expired' => $masjid->isExpired(),
             ]),
         ]);
     }
@@ -89,6 +91,17 @@ class PlatformAdminController extends Controller
         $tenant->update(['is_active' => ! $tenant->is_active]);
 
         return back()->with('success', $tenant->is_active ? 'Tenant diaktifkan.' : 'Tenant dinonaktifkan.');
+    }
+
+    public function updateActiveUntil(Request $request, Masjid $tenant): RedirectResponse
+    {
+        $data = $request->validate([
+            'active_until' => ['nullable', 'date'],
+        ]);
+
+        $tenant->update(['active_until' => $data['active_until']]);
+
+        return back()->with('success', 'Masa aktif tenant diperbarui.');
     }
 
     public function showTenant(Masjid $tenant): Response
@@ -108,6 +121,8 @@ class PlatformAdminController extends Controller
                 'subscription_status' => $tenant->subscription_status,
                 'monthly_fee' => $tenant->monthly_fee !== null ? (float) $tenant->monthly_fee : null,
                 'effective_fee' => $tenant->effectiveMonthlyFee(),
+                'active_until' => $tenant->active_until?->toDateString(),
+                'is_expired' => $tenant->isExpired(),
             ],
             'payments' => $payments->map(fn (TenantPayment $payment) => [
                 'id' => $payment->id,

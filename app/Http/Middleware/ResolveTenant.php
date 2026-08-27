@@ -58,7 +58,10 @@ class ResolveTenant
             return $next($request);
         }
 
-        $masjid = Masjid::where('custom_domain', $host)->whereNotNull('custom_domain_verified_at')->first();
+        $masjid = Masjid::where('custom_domain', $host)
+            ->whereNotNull('custom_domain_verified_at')
+            ->where('is_active', true)
+            ->first();
 
         abort_unless($masjid, 404);
 

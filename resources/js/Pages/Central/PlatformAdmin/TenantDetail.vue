@@ -11,16 +11,34 @@
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-      <div class="card p-5">
-        <p class="text-sm font-medium text-[var(--text-primary)] mb-3">Tarif Langganan</p>
-        <form class="flex items-end gap-2" @submit.prevent="submitFee">
-          <div class="flex-1">
-            <AppInput v-model="feeForm.monthly_fee" type="number" label="Tarif Khusus (Rp/bulan)" :error="feeForm.errors.monthly_fee"
-              :placeholder="`Kosongkan = pakai default (${formatRupiah(defaultMonthlyFee)})`" />
-          </div>
-          <AppButton type="submit" :loading="feeForm.processing">Simpan</AppButton>
-        </form>
-        <p class="text-xs text-[var(--text-muted)] mt-2">Tarif aktif saat ini: <strong>{{ formatRupiah(tenant.effective_fee) }}</strong>/bulan</p>
+      <div class="card p-5 space-y-5">
+        <div>
+          <p class="text-sm font-medium text-[var(--text-primary)] mb-3">Tarif Langganan</p>
+          <form class="flex items-end gap-2" @submit.prevent="submitFee">
+            <div class="flex-1">
+              <AppInput v-model="feeForm.monthly_fee" type="number" label="Tarif Khusus (Rp/bulan)" :error="feeForm.errors.monthly_fee"
+                :placeholder="`Kosongkan = pakai default (${formatRupiah(defaultMonthlyFee)})`" />
+            </div>
+            <AppButton type="submit" :loading="feeForm.processing">Simpan</AppButton>
+          </form>
+          <p class="text-xs text-[var(--text-muted)] mt-2">Tarif aktif saat ini: <strong>{{ formatRupiah(tenant.effective_fee) }}</strong>/bulan</p>
+        </div>
+
+        <div class="pt-4 border-t border-[var(--border)]">
+          <p class="text-sm font-medium text-[var(--text-primary)] mb-3">Masa Aktif</p>
+          <form class="flex items-end gap-2" @submit.prevent="submitActiveUntil">
+            <div class="flex-1">
+              <AppInput v-model="activeUntilForm.active_until" type="date" label="Aktif Hingga" :error="activeUntilForm.errors.active_until" />
+            </div>
+            <AppButton type="submit" :loading="activeUntilForm.processing">Simpan</AppButton>
+          </form>
+          <p v-if="tenant.is_expired" class="text-xs text-red-500 mt-2 font-medium">
+            Sudah lewat masa aktif — nonaktifkan tenant secara manual lewat tombol di daftar tenant kalau perlu.
+          </p>
+          <p v-else class="text-xs text-[var(--text-muted)] mt-2">
+            Cuma penanda di panel ini, tidak otomatis menonaktifkan tenant.
+          </p>
+        </div>
       </div>
 
       <div class="card p-5">
@@ -103,6 +121,14 @@ const feeForm = useForm({
 
 function submitFee() {
   feeForm.put(route('platform-admin.tenant.fee', props.tenant.id), { preserveScroll: true })
+}
+
+const activeUntilForm = useForm({
+  active_until: props.tenant.active_until ?? '',
+})
+
+function submitActiveUntil() {
+  activeUntilForm.put(route('platform-admin.tenant.active-until', props.tenant.id), { preserveScroll: true })
 }
 
 const now = new Date()

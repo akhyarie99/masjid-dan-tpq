@@ -13,6 +13,7 @@
             <th class="p-3">Pengguna</th>
             <th class="p-3">Tarif/Bulan</th>
             <th class="p-3">Bulan Ini</th>
+            <th class="p-3">Masa Aktif</th>
             <th class="p-3">Terdaftar</th>
             <th class="p-3">Status</th>
             <th class="p-3"></th>
@@ -39,6 +40,13 @@
             <td class="p-3">
               <span :class="tenant.paid_this_month ? 'text-green-600' : 'text-red-500'" class="font-medium">
                 {{ tenant.paid_this_month ? 'Lunas' : 'Belum bayar' }}
+              </span>
+            </td>
+            <td class="p-3">
+              <span v-if="!tenant.active_until" class="text-[var(--text-muted)]">-</span>
+              <span v-else :class="tenant.is_expired ? 'text-red-500 font-medium' : ''">
+                {{ tenant.active_until }}
+                <span v-if="tenant.is_expired" class="block text-xs">Kedaluwarsa</span>
               </span>
             </td>
             <td class="p-3">{{ tenant.created_at }}</td>

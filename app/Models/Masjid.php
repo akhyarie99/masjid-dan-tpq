@@ -38,6 +38,7 @@ class Masjid extends Model
         'subscription_status',
         'theme_color',
         'monthly_fee',
+        'active_until',
     ];
 
     protected function casts(): array
@@ -50,7 +51,17 @@ class Masjid extends Model
             'iqomah_offset_minutes' => 'integer',
             'custom_domain_verified_at' => 'datetime',
             'monthly_fee' => 'decimal:2',
+            'active_until' => 'date',
         ];
+    }
+
+    /**
+     * Informasional saja — LIHAT catatan migrasi active_until. Tidak dipakai
+     * untuk menggerbang akses, cuma penanda visual di panel superadmin.
+     */
+    public function isExpired(): bool
+    {
+        return $this->active_until !== null && $this->active_until->isPast();
     }
 
     /**

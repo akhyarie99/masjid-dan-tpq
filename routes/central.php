@@ -23,6 +23,7 @@ Route::prefix('platform-admin')->name('platform-admin.')->group(function () {
 
         Route::get('/tenant/{tenant}', [PlatformAdminController::class, 'showTenant'])->name('tenant.show');
         Route::put('/tenant/{tenant}/fee', [PlatformAdminController::class, 'updateFee'])->name('tenant.fee');
+        Route::put('/tenant/{tenant}/active-until', [PlatformAdminController::class, 'updateActiveUntil'])->name('tenant.active-until');
         Route::post('/tenant/{tenant}/payments', [PlatformAdminController::class, 'storePayment'])->name('tenant.payments.store');
         Route::delete('/tenant/{tenant}/payments/{payment}', [PlatformAdminController::class, 'destroyPayment'])->name('tenant.payments.destroy');
 
