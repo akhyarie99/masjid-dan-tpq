@@ -89,6 +89,7 @@ import EmptyState from '@/Components/Shared/EmptyState.vue'
 defineProps({
   classes: { type: Array, default: () => [] },
   teachers: { type: Array, default: () => [] },
+  activeAcademicYear: { type: Object, default: null },
 })
 
 const showModal = ref(false)
