@@ -45,6 +45,8 @@ class MaintenanceController extends Controller
 
     public function edit(Request $request, AssetMaintenance $maintenance): Response
     {
+        $this->authorizeSameMasjid($request, $maintenance);
+
         return Inertia::render('Asset/Maintenance/Form', [
             'maintenance' => $maintenance,
             'assets' => Asset::where('masjid_id', $request->user()->masjid_id)->orderBy('name')->get(['id', 'name', 'asset_code']),
@@ -53,6 +55,8 @@ class MaintenanceController extends Controller
 
     public function update(Request $request, AssetMaintenance $maintenance): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $maintenance);
+
         $data = $request->validate([
             'type' => ['required', 'in:scheduled,repair,inspection'],
             'description' => ['required', 'string'],
@@ -77,11 +81,24 @@ class MaintenanceController extends Controller
         return redirect()->route('admin.asset.maintenance.index')->with('success', 'Maintenance berhasil diperbarui.');
     }
 
-    public function destroy(AssetMaintenance $maintenance): RedirectResponse
+    public function destroy(Request $request, AssetMaintenance $maintenance): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $maintenance);
+
         $maintenance->delete();
 
         return back()->with('success', 'Jadwal maintenance berhasil dihapus.');
+    }
+
+    /**
+     * AssetMaintenance tidak punya kolom masjid_id maupun global scope tenant —
+     * kepemilikannya diturunkan dari aset yang dirawat. Tanpa ini pengurus
+     * tenant A yang tahu/menebak UUID jadwal maintenance tenant B bisa
+     * lihat/ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, AssetMaintenance $maintenance): void
+    {
+        abort_unless($maintenance->asset?->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateMaintenance(Request $request): array

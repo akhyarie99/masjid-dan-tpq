@@ -25,6 +25,8 @@ class TpqAttendanceController extends Controller
 
     public function show(Request $request, TpqClass $class): Response
     {
+        $this->authorizeSameMasjid($request, $class);
+
         $date = $request->string('date')->toString() ?: now()->toDateString();
         $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
 
@@ -56,6 +58,8 @@ class TpqAttendanceController extends Controller
 
     public function store(Request $request, TpqClass $class): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $class);
+
         $data = $request->validate([
             'date' => ['required', 'date'],
             'attendances' => ['required', 'array'],
@@ -92,6 +96,8 @@ class TpqAttendanceController extends Controller
 
     public function recap(Request $request, TpqClass $class): Response
     {
+        $this->authorizeSameMasjid($request, $class);
+
         $month = $request->integer('month') ?: now()->month;
         $year = $request->integer('year') ?: now()->year;
 
@@ -135,6 +141,8 @@ class TpqAttendanceController extends Controller
 
     public function exportRecapPdf(Request $request, TpqClass $class): \Illuminate\Http\Response
     {
+        $this->authorizeSameMasjid($request, $class);
+
         $month = $request->integer('month') ?: now()->month;
         $year = $request->integer('year') ?: now()->year;
 
@@ -178,5 +186,15 @@ class TpqAttendanceController extends Controller
         ]);
 
         return $pdf->download("rekap-absensi-{$class->name}-{$start->format('Ym')}.pdf");
+    }
+
+    /**
+     * TpqClass tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak UUID kelas
+     * tenant B bisa lihat/isi absensinya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqClass $class): void
+    {
+        abort_unless($class->masjid_id === $request->user()->masjid_id, 404);
     }
 }

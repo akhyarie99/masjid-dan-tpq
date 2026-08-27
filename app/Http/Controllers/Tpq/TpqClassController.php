@@ -49,6 +49,8 @@ class TpqClassController extends Controller
 
     public function update(Request $request, TpqClass $kela): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $kela);
+
         $kela->update($this->validateClass($request));
 
         $this->syncTeachers($request, $kela);
@@ -56,11 +58,23 @@ class TpqClassController extends Controller
         return back()->with('success', 'Kelas berhasil diperbarui.');
     }
 
-    public function destroy(TpqClass $kela): RedirectResponse
+    public function destroy(Request $request, TpqClass $kela): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $kela);
+
         $kela->delete();
 
         return back()->with('success', 'Kelas berhasil dihapus.');
+    }
+
+    /**
+     * TpqClass tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak UUID kelas
+     * tenant B bisa ubah/hapus datanya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqClass $class): void
+    {
+        abort_unless($class->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateClass(Request $request): array

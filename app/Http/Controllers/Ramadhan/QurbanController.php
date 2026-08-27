@@ -57,13 +57,17 @@ class QurbanController extends Controller
 
     public function update(Request $request, QurbanRegistration $qurban): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $qurban);
+
         $qurban->update($this->validateRegistration($request));
 
         return back()->with('success', 'Data pendaftaran qurban berhasil diperbarui.');
     }
 
-    public function destroy(QurbanRegistration $qurban): RedirectResponse
+    public function destroy(Request $request, QurbanRegistration $qurban): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $qurban);
+
         $qurban->delete();
 
         return back()->with('success', 'Pendaftaran qurban berhasil dihapus.');
@@ -102,8 +106,10 @@ class QurbanController extends Controller
         return back()->with('success', 'Distribusi daging qurban berhasil dicatat.');
     }
 
-    public function distributionLabel(QurbanDistribution $distribution): \Illuminate\Http\Response
+    public function distributionLabel(Request $request, QurbanDistribution $distribution): \Illuminate\Http\Response
     {
+        $this->authorizeSameMasjid($request, $distribution);
+
         $pdf = Pdf::loadView('pdf.qurban-label', ['distribution' => $distribution->load('masjid')])
             ->setPaper([0, 0, 283, 170]);
 
@@ -125,6 +131,17 @@ class QurbanController extends Controller
         ]);
 
         return $pdf->download("laporan-distribusi-qurban-{$year}.pdf");
+    }
+
+    /**
+     * QurbanRegistration/QurbanDistribution tidak punya global scope tenant —
+     * route-model binding cuma cari berdasarkan id, jadi tanpa ini pengurus
+     * tenant A yang tahu/menebak UUID pendaftaran/distribusi tenant B bisa
+     * ubah/hapus/cetak labelnya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, QurbanRegistration|QurbanDistribution $model): void
+    {
+        abort_unless($model->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateRegistration(Request $request): array

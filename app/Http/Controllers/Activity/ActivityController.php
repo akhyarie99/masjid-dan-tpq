@@ -53,27 +53,35 @@ class ActivityController extends Controller
         return redirect()->route('admin.activity.calendar')->with('success', 'Kegiatan berhasil dibuat.');
     }
 
-    public function edit(Activity $kegiatan): Response
+    public function edit(Request $request, Activity $kegiatan): Response
     {
+        $this->authorizeSameMasjid($request, $kegiatan);
+
         return Inertia::render('Activity/Form', ['activity' => $kegiatan]);
     }
 
     public function update(Request $request, Activity $kegiatan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $kegiatan);
+
         $kegiatan->update($this->validateActivity($request));
 
         return redirect()->route('admin.activity.calendar')->with('success', 'Kegiatan berhasil diperbarui.');
     }
 
-    public function destroy(Activity $kegiatan): RedirectResponse
+    public function destroy(Request $request, Activity $kegiatan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $kegiatan);
+
         $kegiatan->delete();
 
         return back()->with('success', 'Kegiatan berhasil dihapus.');
     }
 
-    public function qrCode(Activity $kegiatan): Response
+    public function qrCode(Request $request, Activity $kegiatan): Response
     {
+        $this->authorizeSameMasjid($request, $kegiatan);
+
         $token = $this->attendanceToken($kegiatan);
         $url = route('public.activity.checkin', ['activity' => $kegiatan->id, 'token' => $token]);
         $qrSvg = base64_encode(QrCode::size(240)->generate($url));
@@ -134,6 +142,18 @@ class ActivityController extends Controller
         );
 
         return back()->with('success', 'Presensi berhasil dicatat. Jazakumullahu khairan.');
+    }
+
+    /**
+     * Activity tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * kegiatan tenant B bisa lihat/ubah/hapus, bahkan mencetak QR presensinya,
+     * lewat URL langsung. Hanya untuk method admin — publicRegister/checkin*
+     * memang dirancang bisa diakses lintas tenant oleh jamaah umum.
+     */
+    private function authorizeSameMasjid(Request $request, Activity $activity): void
+    {
+        abort_unless($activity->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function attendanceToken(Activity $activity): string

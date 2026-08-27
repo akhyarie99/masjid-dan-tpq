@@ -66,6 +66,8 @@ class AssetController extends Controller
 
     public function edit(Request $request, Asset $inventaris): Response
     {
+        $this->authorizeSameMasjid($request, $inventaris);
+
         return Inertia::render('Asset/Form', [
             'asset' => $inventaris,
             'categories' => AssetCategory::where('masjid_id', $request->user()->masjid_id)->orderBy('name')->get(['id', 'name']),
@@ -74,20 +76,26 @@ class AssetController extends Controller
 
     public function update(Request $request, Asset $inventaris): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $inventaris);
+
         $inventaris->update($this->validateAsset($request));
 
         return redirect()->route('admin.asset.inventaris.index')->with('success', 'Aset berhasil diperbarui.');
     }
 
-    public function destroy(Asset $inventaris): RedirectResponse
+    public function destroy(Request $request, Asset $inventaris): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $inventaris);
+
         $inventaris->delete();
 
         return back()->with('success', 'Aset berhasil dihapus.');
     }
 
-    public function generateQr(Asset $inventaris): Response
+    public function generateQr(Request $request, Asset $inventaris): Response
     {
+        $this->authorizeSameMasjid($request, $inventaris);
+
         $qrSvg = base64_encode(QrCode::size(220)->generate(route('public.asset', $inventaris->asset_code)));
 
         return Inertia::render('Asset/QrLabel', [
@@ -95,6 +103,16 @@ class AssetController extends Controller
             'masjidName' => $inventaris->masjid->name,
             'qrCode' => "data:image/svg+xml;base64,{$qrSvg}",
         ]);
+    }
+
+    /**
+     * Asset tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * aset tenant B bisa lihat/ubah/hapus/cetak QR-nya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Asset $asset): void
+    {
+        abort_unless($asset->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function generateAssetCode(string $masjidId, string $categoryName): string

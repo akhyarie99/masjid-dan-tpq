@@ -29,16 +29,30 @@ class ItikafController extends Controller
 
     public function update(Request $request, ItikafRegistration $itikaf): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $itikaf);
+
         $itikaf->update($this->validateRegistration($request));
 
         return back()->with('success', 'Data itikaf berhasil diperbarui.');
     }
 
-    public function destroy(ItikafRegistration $itikaf): RedirectResponse
+    public function destroy(Request $request, ItikafRegistration $itikaf): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $itikaf);
+
         $itikaf->delete();
 
         return back()->with('success', 'Pendaftaran itikaf berhasil dihapus.');
+    }
+
+    /**
+     * ItikafRegistration tidak punya global scope tenant — route-model binding
+     * cuma cari berdasarkan id, jadi tanpa ini pengurus tenant A yang
+     * tahu/menebak UUID pendaftaran tenant B bisa ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, ItikafRegistration $registration): void
+    {
+        abort_unless($registration->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateRegistration(Request $request): array

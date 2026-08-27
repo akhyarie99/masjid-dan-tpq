@@ -28,6 +28,9 @@ class TpqGradeController extends Controller
 
     public function show(Request $request, TpqClass $class, TpqSemester $semester): Response
     {
+        $this->authorizeSameMasjid($request, $class);
+        $this->authorizeSameMasjid($request, $semester);
+
         $masjidId = $request->user()->masjid_id;
         $activeYear = TpqAcademicYear::where('masjid_id', $masjidId)->where('is_active', true)->first();
 
@@ -61,6 +64,9 @@ class TpqGradeController extends Controller
 
     public function store(Request $request, TpqClass $class, TpqSemester $semester): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $class);
+        $this->authorizeSameMasjid($request, $semester);
+
         $data = $request->validate([
             'grades' => ['required', 'array'],
             'grades.*.student_id' => ['required', 'uuid', 'exists:tpq_students,id'],
@@ -87,6 +93,22 @@ class TpqGradeController extends Controller
         }
 
         return back()->with('success', 'Nilai berhasil disimpan.');
+    }
+
+    /**
+     * TpqClass/TpqSemester tidak punya global scope tenant — route-model binding
+     * cuma cari berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak
+     * UUID kelas/semester tenant B bisa lihat/isi nilainya lewat URL langsung.
+     * TpqSemester sendiri tidak punya kolom masjid_id, kepemilikannya diturunkan
+     * dari tahun ajaran induknya.
+     */
+    private function authorizeSameMasjid(Request $request, TpqClass|TpqSemester $model): void
+    {
+        $masjidId = $model instanceof TpqSemester
+            ? $model->academicYear?->masjid_id
+            : $model->masjid_id;
+
+        abort_unless($masjidId === $request->user()->masjid_id, 404);
     }
 
     private function scoreToLetter(float $score): string

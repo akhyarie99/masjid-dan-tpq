@@ -52,6 +52,8 @@ class BudgetController extends Controller
 
     public function edit(Request $request, Budget $anggaran): Response
     {
+        $this->authorizeSameMasjid($request, $anggaran);
+
         $anggaran->load('items');
 
         $realizations = Transaction::where('masjid_id', $request->user()->masjid_id)
@@ -70,6 +72,8 @@ class BudgetController extends Controller
 
     public function update(Request $request, Budget $anggaran): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $anggaran);
+
         $data = $this->validateBudget($request);
 
         $anggaran->update([
@@ -86,11 +90,23 @@ class BudgetController extends Controller
         return redirect()->route('admin.finance.anggaran.index')->with('success', 'Anggaran (RAB) berhasil diperbarui.');
     }
 
-    public function destroy(Budget $anggaran): RedirectResponse
+    public function destroy(Request $request, Budget $anggaran): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $anggaran);
+
         $anggaran->delete();
 
         return back()->with('success', 'Anggaran (RAB) berhasil dihapus.');
+    }
+
+    /**
+     * Budget tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * anggaran tenant B bisa lihat/ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Budget $budget): void
+    {
+        abort_unless($budget->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateBudget(Request $request): array

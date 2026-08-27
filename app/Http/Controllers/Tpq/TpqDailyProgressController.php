@@ -64,7 +64,7 @@ class TpqDailyProgressController extends Controller
      */
     public function showStudent(Request $request, TpqStudent $student): Response
     {
-        abort_unless($student->masjid_id === $request->user()->masjid_id, 404);
+        $this->authorizeSameMasjid($request, $student);
 
         $date = $request->string('date')->toString() ?: now()->toDateString();
         $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
@@ -104,7 +104,7 @@ class TpqDailyProgressController extends Controller
 
     public function storeStudent(Request $request, TpqStudent $student, GuardianNotifier $notifier): RedirectResponse
     {
-        abort_unless($student->masjid_id === $request->user()->masjid_id, 404);
+        $this->authorizeSameMasjid($request, $student);
 
         $data = $request->validate([
             'date' => ['required', 'date'],
@@ -187,6 +187,8 @@ class TpqDailyProgressController extends Controller
 
     public function show(Request $request, TpqClass $class): Response
     {
+        $this->authorizeSameMasjid($request, $class);
+
         $date = $request->string('date')->toString() ?: now()->toDateString();
         $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
 
@@ -238,6 +240,8 @@ class TpqDailyProgressController extends Controller
 
     public function store(Request $request, TpqClass $class, GuardianNotifier $notifier): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $class);
+
         $data = $request->validate([
             'date' => ['required', 'date'],
             'entries' => ['required', 'array'],
@@ -253,7 +257,13 @@ class TpqDailyProgressController extends Controller
         ]);
 
         foreach ($data['entries'] as $item) {
-            $student = TpqStudent::find($item['student_id']);
+            // where('masjid_id', ...) di sini, BUKAN cuma find(id) — student_id
+            // datang dari body request, cuma divalidasi exists:tpq_students,id
+            // (tidak di-scope tenant), jadi tanpa ini admin tenant A bisa
+            // menyisipkan UUID santri tenant B dan diam-diam menulis progres +
+            // mengirim notifikasi WhatsApp ke wali tenant lain.
+            $student = TpqStudent::where('masjid_id', $request->user()->masjid_id)
+                ->find($item['student_id']);
             if (! $student) {
                 continue;
             }
@@ -262,6 +272,16 @@ class TpqDailyProgressController extends Controller
         }
 
         return back()->with('success', 'Progres mengaji harian berhasil disimpan.');
+    }
+
+    /**
+     * TpqStudent/TpqClass tidak punya global scope tenant — route-model binding
+     * cuma cari berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak
+     * UUID santri/kelas tenant B bisa lihat/isi progresnya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqStudent|TpqClass $model): void
+    {
+        abort_unless($model->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function saveEntry(TpqStudent $student, array $data, string $recordedBy, GuardianNotifier $notifier): TpqDailyProgress

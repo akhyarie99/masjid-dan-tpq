@@ -36,6 +36,8 @@ class TpqAcademicYearController extends Controller
 
     public function update(Request $request, TpqAcademicYear $tahunAjaran): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $tahunAjaran);
+
         $data = $this->validateYear($request);
 
         if ($data['is_active'] ?? false) {
@@ -47,11 +49,23 @@ class TpqAcademicYearController extends Controller
         return back()->with('success', 'Tahun ajaran berhasil diperbarui.');
     }
 
-    public function destroy(TpqAcademicYear $tahunAjaran): RedirectResponse
+    public function destroy(Request $request, TpqAcademicYear $tahunAjaran): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $tahunAjaran);
+
         $tahunAjaran->delete();
 
         return back()->with('success', 'Tahun ajaran berhasil dihapus.');
+    }
+
+    /**
+     * TpqAcademicYear tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak UUID
+     * tahun ajaran tenant B bisa ubah/hapus datanya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqAcademicYear $year): void
+    {
+        abort_unless($year->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateYear(Request $request): array

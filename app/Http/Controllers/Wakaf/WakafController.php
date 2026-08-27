@@ -33,23 +33,39 @@ class WakafController extends Controller
         return redirect()->route('admin.wakaf.index')->with('success', 'Data wakaf berhasil dicatat.');
     }
 
-    public function edit(WakafRecord $wakaf): Response
+    public function edit(Request $request, WakafRecord $wakaf): Response
     {
+        $this->authorizeSameMasjid($request, $wakaf);
+
         return Inertia::render('Wakaf/Form', ['record' => $wakaf]);
     }
 
     public function update(Request $request, WakafRecord $wakaf): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $wakaf);
+
         $wakaf->update($this->validateRecord($request));
 
         return redirect()->route('admin.wakaf.index')->with('success', 'Data wakaf berhasil diperbarui.');
     }
 
-    public function destroy(WakafRecord $wakaf): RedirectResponse
+    public function destroy(Request $request, WakafRecord $wakaf): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $wakaf);
+
         $wakaf->delete();
 
         return back()->with('success', 'Data wakaf berhasil dihapus.');
+    }
+
+    /**
+     * WakafRecord tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID catatan wakaf tenant B bisa lihat/ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, WakafRecord $record): void
+    {
+        abort_unless($record->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateRecord(Request $request): array

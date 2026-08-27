@@ -23,9 +23,21 @@ class DonationController extends Controller
         return Inertia::render('Finance/Donation/Index', ['donations' => $donations]);
     }
 
-    public function show(Donation $donasi): Response
+    public function show(Request $request, Donation $donasi): Response
     {
+        $this->authorizeSameMasjid($request, $donasi);
+
         return Inertia::render('Finance/Donation/Show', ['donation' => $donasi]);
+    }
+
+    /**
+     * Donation tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * donasi tenant B bisa melihat detail donaturnya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Donation $donation): void
+    {
+        abort_unless($donation->masjid_id === $request->user()->masjid_id, 404);
     }
 
     public function publicStore(Request $request, PaymentService $paymentService): JsonResponse

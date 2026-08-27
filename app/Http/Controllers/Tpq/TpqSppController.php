@@ -71,6 +71,8 @@ class TpqSppController extends Controller
 
     public function pay(Request $request, TpqSppBill $bill): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $bill);
+
         $data = $request->validate([
             'amount' => ['required', 'numeric', 'min:0.01'],
             'paid_date' => ['required', 'date'],
@@ -125,5 +127,16 @@ class TpqSppController extends Controller
         }
 
         return back()->with('success', "Reminder SPP dikirim ke {$bills->count()} wali murid.");
+    }
+
+    /**
+     * TpqSppBill tidak punya kolom masjid_id maupun global scope tenant —
+     * kepemilikannya diturunkan dari santri pemiliknya. Tanpa ini admin tenant A
+     * yang tahu/menebak UUID tagihan tenant B bisa mencatat pembayaran atasnya
+     * lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqSppBill $bill): void
+    {
+        abort_unless($bill->student?->masjid_id === $request->user()->masjid_id, 404);
     }
 }

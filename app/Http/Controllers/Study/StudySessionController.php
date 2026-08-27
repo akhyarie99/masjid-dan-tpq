@@ -29,16 +29,30 @@ class StudySessionController extends Controller
 
     public function update(Request $request, StudySession $sesi): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $sesi);
+
         $sesi->update($this->validateSession($request));
 
         return back()->with('success', 'Sesi kajian berhasil diperbarui.');
     }
 
-    public function destroy(StudySession $sesi): RedirectResponse
+    public function destroy(Request $request, StudySession $sesi): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $sesi);
+
         $sesi->delete();
 
         return back()->with('success', 'Sesi kajian berhasil dihapus.');
+    }
+
+    /**
+     * StudySession tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID sesi kajian tenant B bisa ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, StudySession $session): void
+    {
+        abort_unless($session->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateSession(Request $request): array

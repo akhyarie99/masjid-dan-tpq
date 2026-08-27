@@ -51,27 +51,35 @@ class JamaahController extends Controller
         return redirect()->route('admin.jamaah.index')->with('success', 'Data jamaah berhasil ditambahkan.');
     }
 
-    public function edit(JamaahProfile $jamaah): InertiaResponse
+    public function edit(Request $request, JamaahProfile $jamaah): InertiaResponse
     {
+        $this->authorizeSameMasjid($request, $jamaah);
+
         return Inertia::render('Jamaah/Form', ['jamaahProfile' => $jamaah]);
     }
 
     public function update(Request $request, JamaahProfile $jamaah): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $jamaah);
+
         $jamaah->update($this->validateJamaah($request));
 
         return redirect()->route('admin.jamaah.index')->with('success', 'Data jamaah berhasil diperbarui.');
     }
 
-    public function destroy(JamaahProfile $jamaah): RedirectResponse
+    public function destroy(Request $request, JamaahProfile $jamaah): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $jamaah);
+
         $jamaah->delete();
 
         return back()->with('success', 'Data jamaah berhasil dihapus.');
     }
 
-    public function card(JamaahProfile $jamaah): InertiaResponse
+    public function card(Request $request, JamaahProfile $jamaah): InertiaResponse
     {
+        $this->authorizeSameMasjid($request, $jamaah);
+
         $qrSvg = base64_encode(QrCode::size(160)->generate($jamaah->id));
 
         return Inertia::render('Jamaah/Card', [
@@ -101,6 +109,17 @@ class JamaahController extends Controller
         Excel::import($import, $request->file('file'));
 
         return back()->with('success', "{$import->imported} data jamaah berhasil diimpor.");
+    }
+
+    /**
+     * JamaahProfile tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID jamaah tenant B bisa lihat/ubah/hapus data pribadinya (NIK, alamat,
+     * nomor HP) lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, JamaahProfile $jamaah): void
+    {
+        abort_unless($jamaah->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateJamaah(Request $request): array

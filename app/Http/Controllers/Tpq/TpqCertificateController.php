@@ -47,11 +47,24 @@ class TpqCertificateController extends Controller
         return redirect()->route('admin.tpq.sertifikat.index')->with('success', 'Sertifikat berhasil diterbitkan.');
     }
 
-    public function destroy(TpqCertificate $sertifikat): RedirectResponse
+    public function destroy(Request $request, TpqCertificate $sertifikat): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $sertifikat);
+
         $sertifikat->delete();
 
         return back()->with('success', 'Sertifikat berhasil dihapus.');
+    }
+
+    /**
+     * TpqCertificate tidak punya kolom masjid_id maupun global scope tenant —
+     * kepemilikannya diturunkan dari santri pemiliknya. Tanpa ini admin tenant A
+     * yang tahu/menebak UUID sertifikat tenant B bisa menghapusnya lewat URL
+     * langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqCertificate $certificate): void
+    {
+        abort_unless($certificate->student?->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function generatePdf(TpqCertificate $certificate): void

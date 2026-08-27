@@ -13,8 +13,10 @@ use Inertia\Response;
 
 class TpqHafalanController extends Controller
 {
-    public function show(TpqStudent $student): Response
+    public function show(Request $request, TpqStudent $student): Response
     {
+        $this->authorizeSameMasjid($request, $student);
+
         $existing = TpqHafalanProgress::where('student_id', $student->id)->get()->keyBy('surah_number');
 
         $progress = collect(QuranSurahs::all())->map(function ($surah, $number) use ($existing, $student) {
@@ -54,6 +56,8 @@ class TpqHafalanController extends Controller
 
     public function update(Request $request, TpqStudent $student): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $student);
+
         $data = $request->validate([
             'surah_number' => ['required', 'integer', 'min:1', 'max:114'],
             'memorized_ayah' => ['required', 'integer', 'min:0'],
@@ -70,5 +74,15 @@ class TpqHafalanController extends Controller
             ]);
 
         return back()->with('success', 'Progress hafalan berhasil disimpan.');
+    }
+
+    /**
+     * TpqStudent tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak UUID santri
+     * tenant B bisa lihat/ubah progres hafalannya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqStudent $student): void
+    {
+        abort_unless($student->masjid_id === $request->user()->masjid_id, 404);
     }
 }

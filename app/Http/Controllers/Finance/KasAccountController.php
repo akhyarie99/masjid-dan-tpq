@@ -39,13 +39,17 @@ class KasAccountController extends Controller
 
     public function update(Request $request, KasAccount $kas): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $kas);
+
         $kas->update($this->validateAccount($request));
 
         return back()->with('success', 'Rekening kas berhasil diperbarui.');
     }
 
-    public function destroy(KasAccount $kas): RedirectResponse
+    public function destroy(Request $request, KasAccount $kas): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $kas);
+
         if (Transaction::where('kas_account_id', $kas->id)->exists()) {
             return back()->with('error', 'Rekening kas tidak dapat dihapus karena memiliki riwayat transaksi.');
         }
@@ -53,6 +57,16 @@ class KasAccountController extends Controller
         $kas->delete();
 
         return back()->with('success', 'Rekening kas berhasil dihapus.');
+    }
+
+    /**
+     * KasAccount tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * rekening kas tenant B bisa ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, KasAccount $account): void
+    {
+        abort_unless($account->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateAccount(Request $request): array

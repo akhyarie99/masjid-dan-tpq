@@ -43,6 +43,8 @@ class SocialProgramController extends Controller
 
     public function show(Request $request, SocialProgram $programSosial): Response
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+
         return Inertia::render('Jamaah/SocialPrograms/Show', [
             'program' => $programSosial,
             'recipients' => $programSosial->recipients()->orderBy('name')->get(),
@@ -52,13 +54,17 @@ class SocialProgramController extends Controller
 
     public function update(Request $request, SocialProgram $programSosial): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+
         $programSosial->update($this->validateProgram($request));
 
         return back()->with('success', 'Program sosial berhasil diperbarui.');
     }
 
-    public function destroy(SocialProgram $programSosial): RedirectResponse
+    public function destroy(Request $request, SocialProgram $programSosial): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+
         $programSosial->delete();
 
         return redirect()->route('admin.jamaah.program-sosial.index')->with('success', 'Program sosial berhasil dihapus.');
@@ -66,6 +72,8 @@ class SocialProgramController extends Controller
 
     public function addRecipient(Request $request, SocialProgram $programSosial): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+
         $data = $request->validate([
             'jamaah_id' => ['nullable', 'uuid', 'exists:jamaah_profiles,id'],
             'name' => ['required', 'string', 'max:255'],
@@ -80,6 +88,9 @@ class SocialProgramController extends Controller
 
     public function distribute(Request $request, SocialProgram $programSosial, SocialProgramRecipient $recipient): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+        $this->authorizeRecipientOfProgram($request, $programSosial, $recipient);
+
         $data = $request->validate([
             'aid_type' => ['required', 'string', 'max:255'],
             'amount' => ['nullable', 'numeric', 'min:0'],
@@ -94,8 +105,11 @@ class SocialProgramController extends Controller
         return back()->with('success', 'Distribusi berhasil dicatat.');
     }
 
-    public function receipt(SocialProgram $programSosial, SocialProgramRecipient $recipient): \Illuminate\Http\Response
+    public function receipt(Request $request, SocialProgram $programSosial, SocialProgramRecipient $recipient): \Illuminate\Http\Response
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+        $this->authorizeRecipientOfProgram($request, $programSosial, $recipient);
+
         $recipient->load('program.masjid');
 
         $pdf = Pdf::loadView('pdf.social-program-receipt', [
@@ -107,8 +121,10 @@ class SocialProgramController extends Controller
         return $pdf->download("tanda-terima-{$recipient->name}.pdf");
     }
 
-    public function report(SocialProgram $programSosial): \Illuminate\Http\Response
+    public function report(Request $request, SocialProgram $programSosial): \Illuminate\Http\Response
     {
+        $this->authorizeSameMasjid($request, $programSosial);
+
         $recipients = $programSosial->recipients()->whereNotNull('distributed_at')->get();
 
         $pdf = Pdf::loadView('pdf.social-program-report', [
@@ -119,6 +135,34 @@ class SocialProgramController extends Controller
         ]);
 
         return $pdf->download("laporan-distribusi-{$programSosial->name}.pdf");
+    }
+
+    /**
+     * SocialProgram tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID program sosial tenant B bisa lihat/ubah/hapus lewat URL langsung.
+     * SocialProgramRecipient sendiri tidak punya kolom masjid_id, kepemilikannya
+     * diturunkan dari program induknya.
+     */
+    private function authorizeSameMasjid(Request $request, SocialProgram|SocialProgramRecipient $model): void
+    {
+        $masjidId = $model instanceof SocialProgramRecipient
+            ? $model->program?->masjid_id
+            : $model->masjid_id;
+
+        abort_unless($masjidId === $request->user()->masjid_id, 404);
+    }
+
+    /**
+     * Binding bersarang di sini tidak di-scope Laravel: {recipient} dicari cuma
+     * berdasarkan id, tanpa memastikan dia benar-benar penerima {programSosial}.
+     * Jadi selain cek tenant, pasangan program–penerima juga harus cocok.
+     */
+    private function authorizeRecipientOfProgram(Request $request, SocialProgram $program, SocialProgramRecipient $recipient): void
+    {
+        $this->authorizeSameMasjid($request, $recipient);
+
+        abort_unless($recipient->program_id === $program->id, 404);
     }
 
     private function validateProgram(Request $request): array

@@ -44,6 +44,8 @@ class KhatamTrackerController extends Controller
 
     public function update(Request $request, KhatamTracker $khatam): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $khatam);
+
         $data = $request->validate([
             'completed_juz' => ['required', 'array'],
             'completed_juz.*' => ['integer', 'min:1', 'max:30'],
@@ -60,11 +62,23 @@ class KhatamTrackerController extends Controller
         return back()->with('success', 'Progress khatam berhasil diperbarui.');
     }
 
-    public function destroy(KhatamTracker $khatam): RedirectResponse
+    public function destroy(Request $request, KhatamTracker $khatam): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $khatam);
+
         $khatam->delete();
 
         return back()->with('success', 'Peserta khatam berhasil dihapus.');
+    }
+
+    /**
+     * KhatamTracker tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID peserta khatam tenant B bisa ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, KhatamTracker $tracker): void
+    {
+        abort_unless($tracker->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateTracker(Request $request): array

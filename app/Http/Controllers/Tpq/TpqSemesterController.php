@@ -40,6 +40,8 @@ class TpqSemesterController extends Controller
 
     public function update(Request $request, TpqSemester $semester): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $semester);
+
         $data = $this->validateSemester($request);
 
         if ($data['is_active'] ?? false) {
@@ -51,11 +53,24 @@ class TpqSemesterController extends Controller
         return back()->with('success', 'Semester berhasil diperbarui.');
     }
 
-    public function destroy(TpqSemester $semester): RedirectResponse
+    public function destroy(Request $request, TpqSemester $semester): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $semester);
+
         $semester->delete();
 
         return back()->with('success', 'Semester berhasil dihapus.');
+    }
+
+    /**
+     * TpqSemester tidak punya kolom masjid_id maupun global scope tenant —
+     * kepemilikannya diturunkan dari tahun ajaran induknya. Tanpa ini admin
+     * tenant A yang tahu/menebak UUID semester tenant B bisa ubah/hapus datanya
+     * lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqSemester $semester): void
+    {
+        abort_unless($semester->academicYear?->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateSemester(Request $request): array

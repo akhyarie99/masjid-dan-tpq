@@ -14,8 +14,10 @@ use Inertia\Response;
 
 class AttendanceController extends Controller
 {
-    public function show(Activity $activity): Response
+    public function show(Request $request, Activity $activity): Response
     {
+        $this->authorizeSameMasjid($request, $activity);
+
         $registrations = ActivityRegistration::where('activity_id', $activity->id)
             ->orderBy('name')
             ->get();
@@ -28,6 +30,8 @@ class AttendanceController extends Controller
 
     public function store(Request $request, Activity $activity): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $activity);
+
         $data = $request->validate([
             'registration_id' => ['required', 'uuid', 'exists:activity_registrations,id'],
             'is_attended' => ['required', 'boolean'],
@@ -44,6 +48,8 @@ class AttendanceController extends Controller
 
     public function scanQr(Request $request, Activity $activity): JsonResponse
     {
+        $this->authorizeSameMasjid($request, $activity);
+
         $data = $request->validate([
             'phone' => ['required', 'string'],
         ]);
@@ -61,8 +67,10 @@ class AttendanceController extends Controller
         return response()->json(['message' => "{$registration->name} berhasil dicatat hadir.", 'registration' => $registration]);
     }
 
-    public function exportPdf(Activity $activity): \Illuminate\Http\Response
+    public function exportPdf(Request $request, Activity $activity): \Illuminate\Http\Response
     {
+        $this->authorizeSameMasjid($request, $activity);
+
         $registrations = ActivityRegistration::where('activity_id', $activity->id)->orderBy('name')->get();
 
         $pdf = Pdf::loadView('pdf.attendance-list', [
@@ -73,5 +81,16 @@ class AttendanceController extends Controller
         ]);
 
         return $pdf->download("daftar-hadir-{$activity->id}.pdf");
+    }
+
+    /**
+     * Activity tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * kegiatan tenant B bisa melihat/mengubah/mengekspor daftar hadirnya
+     * (lengkap dengan nama & nomor HP peserta) lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Activity $activity): void
+    {
+        abort_unless($activity->masjid_id === $request->user()->masjid_id, 404);
     }
 }

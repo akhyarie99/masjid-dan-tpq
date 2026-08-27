@@ -41,16 +41,30 @@ class LibraryBookController extends Controller
 
     public function update(Request $request, LibraryBook $buku): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $buku);
+
         $buku->update($this->validateBook($request));
 
         return back()->with('success', 'Data buku berhasil diperbarui.');
     }
 
-    public function destroy(LibraryBook $buku): RedirectResponse
+    public function destroy(Request $request, LibraryBook $buku): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $buku);
+
         $buku->delete();
 
         return back()->with('success', 'Buku berhasil dihapus.');
+    }
+
+    /**
+     * LibraryBook tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID buku tenant B bisa ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, LibraryBook $book): void
+    {
+        abort_unless($book->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateBook(Request $request): array

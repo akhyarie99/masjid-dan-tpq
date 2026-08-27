@@ -53,8 +53,10 @@ class LibraryLoanController extends Controller
         return back()->with('success', 'Peminjaman buku berhasil dicatat.');
     }
 
-    public function returnBook(LibraryLoan $loan): RedirectResponse
+    public function returnBook(Request $request, LibraryLoan $loan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $loan);
+
         $loan->update([
             'status' => 'dikembalikan',
             'return_date_actual' => now()->toDateString(),
@@ -63,10 +65,23 @@ class LibraryLoanController extends Controller
         return back()->with('success', 'Buku berhasil dikembalikan.');
     }
 
-    public function destroy(LibraryLoan $loan): RedirectResponse
+    public function destroy(Request $request, LibraryLoan $loan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $loan);
+
         $loan->delete();
 
         return back()->with('success', 'Data peminjaman berhasil dihapus.');
+    }
+
+    /**
+     * LibraryLoan tidak punya kolom masjid_id maupun global scope tenant —
+     * kepemilikannya diturunkan dari buku yang dipinjam. Tanpa ini pengurus
+     * tenant A yang tahu/menebak UUID peminjaman tenant B bisa
+     * mengembalikan/menghapusnya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, LibraryLoan $loan): void
+    {
+        abort_unless($loan->book?->masjid_id === $request->user()->masjid_id, 404);
     }
 }

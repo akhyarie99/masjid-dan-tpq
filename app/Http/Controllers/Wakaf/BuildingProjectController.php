@@ -33,8 +33,10 @@ class BuildingProjectController extends Controller
         return redirect()->route('admin.wakaf.proyek.index')->with('success', 'Proyek pembangunan berhasil dibuat.');
     }
 
-    public function show(BuildingProject $proyek): Response
+    public function show(Request $request, BuildingProject $proyek): Response
     {
+        $this->authorizeSameMasjid($request, $proyek);
+
         $proyek->load(['updates.poster:id,name']);
 
         return Inertia::render('Wakaf/Projects/Show', [
@@ -42,20 +44,26 @@ class BuildingProjectController extends Controller
         ]);
     }
 
-    public function edit(BuildingProject $proyek): Response
+    public function edit(Request $request, BuildingProject $proyek): Response
     {
+        $this->authorizeSameMasjid($request, $proyek);
+
         return Inertia::render('Wakaf/Projects/Form', ['project' => $proyek]);
     }
 
     public function update(Request $request, BuildingProject $proyek): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $proyek);
+
         $proyek->update($this->validateProject($request));
 
         return back()->with('success', 'Proyek pembangunan berhasil diperbarui.');
     }
 
-    public function destroy(BuildingProject $proyek): RedirectResponse
+    public function destroy(Request $request, BuildingProject $proyek): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $proyek);
+
         $proyek->delete();
 
         return redirect()->route('admin.wakaf.proyek.index')->with('success', 'Proyek pembangunan berhasil dihapus.');
@@ -63,6 +71,8 @@ class BuildingProjectController extends Controller
 
     public function storeUpdate(Request $request, BuildingProject $proyek): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $proyek);
+
         $data = $request->validate([
             'title' => ['required', 'string', 'max:255'],
             'description' => ['nullable', 'string'],
@@ -85,6 +95,17 @@ class BuildingProjectController extends Controller
         }
 
         return back()->with('success', 'Update progress proyek berhasil ditambahkan.');
+    }
+
+    /**
+     * BuildingProject tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID proyek tenant B bisa lihat/ubah/hapus, bahkan menyisipkan update
+     * progres palsu, lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, BuildingProject $project): void
+    {
+        abort_unless($project->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateProject(Request $request): array

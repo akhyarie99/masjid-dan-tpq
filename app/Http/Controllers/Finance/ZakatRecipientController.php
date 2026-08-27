@@ -27,16 +27,30 @@ class ZakatRecipientController extends Controller
 
     public function update(Request $request, ZakatRecipient $penerima): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $penerima);
+
         $penerima->update($this->validateRecipient($request));
 
         return back()->with('success', 'Data penerima zakat berhasil diperbarui.');
     }
 
-    public function destroy(ZakatRecipient $penerima): RedirectResponse
+    public function destroy(Request $request, ZakatRecipient $penerima): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $penerima);
+
         $penerima->delete();
 
         return back()->with('success', 'Penerima zakat berhasil dihapus.');
+    }
+
+    /**
+     * ZakatRecipient tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID mustahik tenant B bisa ubah/hapus datanya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, ZakatRecipient $recipient): void
+    {
+        abort_unless($recipient->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateRecipient(Request $request): array

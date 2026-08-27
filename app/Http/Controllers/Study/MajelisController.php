@@ -30,6 +30,8 @@ class MajelisController extends Controller
 
     public function show(Request $request, Majelis $majelis): Response
     {
+        $this->authorizeSameMasjid($request, $majelis);
+
         return Inertia::render('Study/Majelis/Show', [
             'majelis' => $majelis,
             'members' => $majelis->members()->orderBy('name')->get(),
@@ -38,16 +40,31 @@ class MajelisController extends Controller
 
     public function update(Request $request, Majelis $majelis): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $majelis);
+
         $majelis->update($this->validateMajelis($request));
 
         return back()->with('success', 'Majelis taklim berhasil diperbarui.');
     }
 
-    public function destroy(Majelis $majelis): RedirectResponse
+    public function destroy(Request $request, Majelis $majelis): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $majelis);
+
         $majelis->delete();
 
         return back()->with('success', 'Majelis taklim berhasil dihapus.');
+    }
+
+    /**
+     * Majelis tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * majelis tenant B bisa lihat/ubah/hapus beserta daftar anggotanya lewat
+     * URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Majelis $majelis): void
+    {
+        abort_unless($majelis->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateMajelis(Request $request): array

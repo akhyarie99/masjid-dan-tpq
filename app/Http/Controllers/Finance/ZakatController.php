@@ -42,23 +42,39 @@ class ZakatController extends Controller
         return redirect()->route('admin.finance.zakat.index')->with('success', 'Data zakat berhasil dicatat.');
     }
 
-    public function edit(ZakatRecord $penerimaan): Response
+    public function edit(Request $request, ZakatRecord $penerimaan): Response
     {
+        $this->authorizeSameMasjid($request, $penerimaan);
+
         return Inertia::render('Finance/Zakat/Form', ['record' => $penerimaan]);
     }
 
     public function update(Request $request, ZakatRecord $penerimaan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $penerimaan);
+
         $penerimaan->update($this->validateRecord($request));
 
         return redirect()->route('admin.finance.zakat.index')->with('success', 'Data zakat berhasil diperbarui.');
     }
 
-    public function destroy(ZakatRecord $penerimaan): RedirectResponse
+    public function destroy(Request $request, ZakatRecord $penerimaan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $penerimaan);
+
         $penerimaan->delete();
 
         return back()->with('success', 'Data zakat berhasil dihapus.');
+    }
+
+    /**
+     * ZakatRecord tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * catatan zakat tenant B bisa lihat/ubah/hapus lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, ZakatRecord $record): void
+    {
+        abort_unless($record->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateRecord(Request $request): array

@@ -45,13 +45,17 @@ class AnnouncementController extends Controller
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil dibuat.');
     }
 
-    public function edit(Announcement $pengumuman): Response
+    public function edit(Request $request, Announcement $pengumuman): Response
     {
+        $this->authorizeSameMasjid($request, $pengumuman);
+
         return Inertia::render('Announcement/Form', ['announcement' => $pengumuman]);
     }
 
     public function update(Request $request, Announcement $pengumuman): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $pengumuman);
+
         $data = $this->validateAnnouncement($request);
         $wasPublished = $pengumuman->is_published;
 
@@ -67,11 +71,25 @@ class AnnouncementController extends Controller
         return redirect()->route('pengumuman.index')->with('success', 'Pengumuman berhasil diperbarui.');
     }
 
-    public function destroy(Announcement $pengumuman): RedirectResponse
+    public function destroy(Request $request, Announcement $pengumuman): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $pengumuman);
+
         $pengumuman->delete();
 
         return back()->with('success', 'Pengumuman berhasil dihapus.');
+    }
+
+    /**
+     * Announcement tidak punya global scope tenant — route-model binding cuma
+     * cari berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak
+     * UUID pengumuman tenant B bisa lihat/ubah/hapus — dan lewat update yang
+     * mengaktifkan send_whatsapp, ikut menyiarkan broadcast ke jamaah tenant
+     * tersebut — lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Announcement $announcement): void
+    {
+        abort_unless($announcement->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateAnnouncement(Request $request): array

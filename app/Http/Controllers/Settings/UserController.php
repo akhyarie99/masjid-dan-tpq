@@ -53,8 +53,10 @@ class UserController extends Controller
         return redirect()->route('admin.settings.pengguna.index')->with('success', 'Pengguna berhasil ditambahkan.');
     }
 
-    public function edit(User $pengguna): Response
+    public function edit(Request $request, User $pengguna): Response
     {
+        $this->authorizeSameMasjid($request, $pengguna);
+
         return Inertia::render('Settings/Users/Form', [
             'user' => $pengguna->load('roles:id,name'),
             'roles' => Role::pluck('name'),
@@ -63,6 +65,8 @@ class UserController extends Controller
 
     public function update(Request $request, User $pengguna): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $pengguna);
+
         $data = $this->validateUser($request, $pengguna->id);
 
         $pengguna->update([
@@ -78,8 +82,10 @@ class UserController extends Controller
         return redirect()->route('admin.settings.pengguna.index')->with('success', 'Pengguna berhasil diperbarui.');
     }
 
-    public function destroy(User $pengguna): RedirectResponse
+    public function destroy(Request $request, User $pengguna): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $pengguna);
+
         if ($pengguna->id === request()->user()->id) {
             return back()->with('error', 'Anda tidak dapat menghapus akun sendiri.');
         }
@@ -87,6 +93,18 @@ class UserController extends Controller
         $pengguna->delete();
 
         return back()->with('success', 'Pengguna berhasil dihapus.');
+    }
+
+    /**
+     * User tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak UUID
+     * pengurus tenant B bisa mengganti password/role-nya, atau menghapusnya,
+     * lewat URL langsung. users.masjid_id NOT NULL, jadi tidak ada kasus
+     * null === null yang lolos diam-diam.
+     */
+    private function authorizeSameMasjid(Request $request, User $user): void
+    {
+        abort_unless($user->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateUser(Request $request, ?string $userId = null): array

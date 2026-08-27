@@ -53,6 +53,8 @@ class AssetLoanController extends Controller
 
     public function approve(Request $request, AssetLoan $loan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $loan);
+
         $loan->update([
             'status' => 'approved',
             'approved_by' => $request->user()->id,
@@ -65,6 +67,8 @@ class AssetLoanController extends Controller
 
     public function returnAsset(Request $request, AssetLoan $loan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $loan);
+
         $data = $request->validate([
             'condition_in' => ['required', 'in:baik,cukup,rusak_ringan,rusak_berat'],
         ]);
@@ -83,10 +87,23 @@ class AssetLoanController extends Controller
         return back()->with('success', 'Aset berhasil dikembalikan.');
     }
 
-    public function destroy(AssetLoan $loan): RedirectResponse
+    public function destroy(Request $request, AssetLoan $loan): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $loan);
+
         $loan->delete();
 
         return back()->with('success', 'Data peminjaman berhasil dihapus.');
+    }
+
+    /**
+     * AssetLoan tidak punya kolom masjid_id maupun global scope tenant —
+     * kepemilikannya diturunkan dari aset yang dipinjam. Tanpa ini pengurus
+     * tenant A yang tahu/menebak UUID peminjaman tenant B bisa
+     * menyetujui/mengembalikan/menghapusnya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, AssetLoan $loan): void
+    {
+        abort_unless($loan->asset?->masjid_id === $request->user()->masjid_id, 404);
     }
 }

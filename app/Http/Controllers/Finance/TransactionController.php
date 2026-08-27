@@ -96,6 +96,8 @@ class TransactionController extends Controller
 
     public function edit(Request $request, Transaction $transaksi): Response
     {
+        $this->authorizeSameMasjid($request, $transaksi);
+
         $masjidId = $request->user()->masjid_id;
 
         return Inertia::render('Finance/Transactions/Form', [
@@ -107,6 +109,8 @@ class TransactionController extends Controller
 
     public function update(Request $request, Transaction $transaksi): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $transaksi);
+
         $data = $this->validateTransaction($request);
 
         $proofPath = $request->hasFile('proof_file')
@@ -127,8 +131,10 @@ class TransactionController extends Controller
         return redirect()->route('admin.finance.transaksi.index')->with('success', 'Transaksi berhasil diperbarui.');
     }
 
-    public function destroy(Transaction $transaksi): RedirectResponse
+    public function destroy(Request $request, Transaction $transaksi): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $transaksi);
+
         $transaksi->delete();
 
         return back()->with('success', 'Transaksi berhasil dihapus.');
@@ -136,6 +142,8 @@ class TransactionController extends Controller
 
     public function approve(Request $request, Transaction $transaksi): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $transaksi);
+
         $data = $request->validate([
             'status' => ['required', 'in:approved,rejected'],
             'notes' => ['nullable', 'string'],
@@ -148,6 +156,16 @@ class TransactionController extends Controller
         ]);
 
         return back()->with('success', $data['status'] === 'approved' ? 'Transaksi disetujui.' : 'Transaksi ditolak.');
+    }
+
+    /**
+     * Transaction tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini pengurus tenant A yang tahu/menebak UUID
+     * transaksi tenant B bisa lihat/ubah/hapus/setujui lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, Transaction $transaction): void
+    {
+        abort_unless($transaction->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function validateTransaction(Request $request): array
