@@ -82,6 +82,8 @@ class TpqStudentController extends Controller
 
     public function edit(Request $request, TpqStudent $santri): InertiaResponse
     {
+        $this->authorizeSameMasjid($request, $santri);
+
         $activeYear = TpqAcademicYear::where('masjid_id', $request->user()->masjid_id)->where('is_active', true)->first();
         $currentClass = TpqStudentClass::where('student_id', $santri->id)->where('academic_year_id', $activeYear?->id)->first();
 
@@ -94,6 +96,8 @@ class TpqStudentController extends Controller
 
     public function update(Request $request, TpqStudent $santri): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $santri);
+
         $data = $this->validateStudent($request, $santri->id);
 
         $santri->update(collect($data)->except('class_id')->all());
@@ -110,11 +114,31 @@ class TpqStudentController extends Controller
         return redirect()->route('admin.tpq.santri.index')->with('success', 'Data santri berhasil diperbarui.');
     }
 
-    public function destroy(TpqStudent $santri): RedirectResponse
+    public function destroy(Request $request, TpqStudent $santri): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $santri);
+
         $santri->delete();
 
         return back()->with('success', 'Santri berhasil dihapus.');
+    }
+
+    public function bulkDestroy(Request $request): RedirectResponse
+    {
+        $data = $request->validate([
+            'student_ids' => ['required', 'array', 'min:1'],
+            'student_ids.*' => ['uuid'],
+        ]);
+
+        // where('masjid_id', ...) di sini, BUKAN cuma whereIn(id), supaya request
+        // yang disisipi UUID santri tenant lain diam-diam diabaikan alih-alih
+        // ikut terhapus — sama seperti pengecekan di authorizeSameMasjid() untuk
+        // hapus satuan.
+        $count = TpqStudent::where('masjid_id', $request->user()->masjid_id)
+            ->whereIn('id', $data['student_ids'])
+            ->delete();
+
+        return back()->with('success', "{$count} santri berhasil dihapus.");
     }
 
     /**
@@ -122,8 +146,10 @@ class TpqStudentController extends Controller
      * di portal wali) — ini satu-satunya jalan reset kalau wali lupa: kembalikan
      * ke NIS santri, konvensi yang sama dipakai saat akun pertama kali dibuat.
      */
-    public function resetWaliPassword(TpqStudent $santri): RedirectResponse
+    public function resetWaliPassword(Request $request, TpqStudent $santri): RedirectResponse
     {
+        $this->authorizeSameMasjid($request, $santri);
+
         if (! $santri->guardian_phone) {
             return back()->with('error', 'Santri ini belum punya nomor HP wali.');
         }
@@ -139,8 +165,10 @@ class TpqStudentController extends Controller
         return back()->with('success', "Password wali direset ke NIS ({$santri->nis}).");
     }
 
-    public function card(TpqStudent $student): InertiaResponse
+    public function card(Request $request, TpqStudent $student): InertiaResponse
     {
+        $this->authorizeSameMasjid($request, $student);
+
         $qrSvg = base64_encode(QrCode::size(160)->generate($student->id));
 
         return Inertia::render('Learning/Tpq/Students/Card', [
@@ -179,6 +207,16 @@ class TpqStudentController extends Controller
         }
 
         return back()->with('success', $message);
+    }
+
+    /**
+     * TpqStudent tidak punya global scope tenant — route-model binding cuma cari
+     * berdasarkan id, jadi tanpa ini admin tenant A yang tahu/menebak UUID santri
+     * tenant B bisa lihat/ubah/hapus datanya lewat URL langsung.
+     */
+    private function authorizeSameMasjid(Request $request, TpqStudent $student): void
+    {
+        abort_unless($student->masjid_id === $request->user()->masjid_id, 404);
     }
 
     private function generateNis(string $masjidId): string

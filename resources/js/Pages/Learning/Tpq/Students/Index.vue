@@ -19,15 +19,30 @@
       </div>
     </AppCard>
 
+    <div v-if="selected.length > 0" class="flex items-center gap-3 mb-3">
+      <span class="text-sm text-[var(--text-muted)]">{{ selected.length }} santri terpilih</span>
+      <button type="button" class="btn-secondary text-xs !text-red-500" @click="bulkDestroy">
+        <Trash2Icon class="w-3.5 h-3.5" /> Hapus Terpilih
+      </button>
+    </div>
+
     <AppCard :padded="false">
       <div class="table-responsive">
         <table class="table">
-          <thead><tr><th>NIS</th><th>Nama</th><th>Kelas</th><th>Wali</th><th>Status</th><th></th></tr></thead>
+          <thead>
+            <tr>
+              <th class="w-8">
+                <input type="checkbox" :checked="allOnPageSelected" @change="toggleSelectAll" />
+              </th>
+              <th>NIS</th><th>Nama</th><th>Kelas</th><th>Wali</th><th>Status</th><th></th>
+            </tr>
+          </thead>
           <tbody>
             <tr v-if="students.data.length === 0">
-              <td colspan="6" class="text-center text-[var(--text-muted)] py-8">Belum ada santri.</td>
+              <td colspan="7" class="text-center text-[var(--text-muted)] py-8">Belum ada santri.</td>
             </tr>
             <tr v-for="student in students.data" :key="student.id">
+              <td><input type="checkbox" :value="student.id" v-model="selected" /></td>
               <td>{{ student.nis }}</td>
               <td>{{ student.name }}</td>
               <td>{{ student.student_classes?.[0]?.class?.name ?? '-' }}</td>
@@ -39,6 +54,7 @@
                   <Link :href="route('admin.tpq.hafalan.show', student.id)" class="text-primary-600 text-sm hover:underline">Hafalan</Link>
                   <a :href="route('admin.tpq.santri.card', student.id)" target="_blank" class="text-primary-600 text-sm hover:underline">Kartu</a>
                   <button type="button" class="text-primary-600 text-sm hover:underline" @click="resetWaliPassword(student)">Reset Password Wali</button>
+                  <button type="button" class="text-red-500 text-sm hover:underline" @click="destroyOne(student)">Hapus</button>
                 </div>
               </td>
             </tr>
@@ -70,9 +86,9 @@
 </template>
 
 <script setup>
-import { reactive, ref, watch } from 'vue'
+import { computed, reactive, ref, watch } from 'vue'
 import { Head, Link, router, useForm } from '@inertiajs/vue3'
-import { Plus as PlusIcon, Download as DownloadIcon, Upload as UploadIcon } from 'lucide-vue-next'
+import { Plus as PlusIcon, Download as DownloadIcon, Upload as UploadIcon, Trash2 as Trash2Icon } from 'lucide-vue-next'
 import AdminLayout from '@/Layouts/AdminLayout.vue'
 import PageHeader from '@/Components/Shared/PageHeader.vue'
 import TpqSubNav from '@/Components/Shared/TpqSubNav.vue'
@@ -100,6 +116,35 @@ const filters = reactive({
 watch(filters, () => {
   router.get(route('admin.tpq.santri.index'), { ...filters }, { preserveState: true, replace: true })
 }, { deep: true })
+
+const selected = ref([])
+
+// Halaman/filter berganti -> daftar santri yang tampil beda, jadi seleksi lama
+// (berisi id dari halaman sebelumnya) tidak relevan lagi dan bisa menyesatkan
+// kalau tetap dianggap "terpilih".
+watch(() => props.students.data, () => { selected.value = [] })
+
+const allOnPageSelected = computed(() =>
+  props.students.data.length > 0 && props.students.data.every((s) => selected.value.includes(s.id))
+)
+
+function toggleSelectAll() {
+  selected.value = allOnPageSelected.value ? [] : props.students.data.map((s) => s.id)
+}
+
+function destroyOne(student) {
+  if (!confirm(`Hapus data santri ${student.name}? Tindakan ini tidak bisa dibatalkan.`)) return
+  router.delete(route('admin.tpq.santri.destroy', student.id), { preserveScroll: true })
+}
+
+function bulkDestroy() {
+  if (!confirm(`Hapus ${selected.value.length} santri terpilih? Tindakan ini tidak bisa dibatalkan.`)) return
+  router.delete(route('admin.tpq.santri.bulk-destroy'), {
+    data: { student_ids: selected.value },
+    preserveScroll: true,
+    onSuccess: () => { selected.value = [] },
+  })
+}
 
 const showImport = ref(false)
 const importForm = useForm({ file: null })

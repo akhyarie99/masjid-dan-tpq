@@ -350,6 +350,11 @@ Route::middleware(['auth'])->group(function () {
                 Route::delete('kelas/{kela}', [TpqClassController::class, 'destroy'])->name('kelas.destroy');
                 Route::get('santri/create', [TpqStudentController::class, 'create'])->name('santri.create');
                 Route::post('santri', [TpqStudentController::class, 'store'])->name('santri.store');
+                // Path statis WAJIB didaftarkan sebelum santri/{santri} di bawah — kalau
+                // tidak, "santri/bulk-destroy" akan ketangkap duluan oleh {santri} (jadi
+                // dianggap UUID "bulk-destroy" yang tidak valid, 404) karena keduanya
+                // method DELETE dengan jumlah segmen sama.
+                Route::delete('santri/bulk-destroy', [TpqStudentController::class, 'bulkDestroy'])->name('santri.bulk-destroy');
                 Route::get('santri/{santri}/edit', [TpqStudentController::class, 'edit'])->name('santri.edit');
                 Route::put('santri/{santri}', [TpqStudentController::class, 'update'])->name('santri.update');
                 Route::delete('santri/{santri}', [TpqStudentController::class, 'destroy'])->name('santri.destroy');
