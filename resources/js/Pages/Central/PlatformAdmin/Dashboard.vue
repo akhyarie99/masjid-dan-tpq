@@ -36,6 +36,7 @@
             <td class="p-3">
               {{ formatRupiah(tenant.monthly_fee) }}
               <span v-if="tenant.has_custom_fee" class="text-xs text-amber-600 block">(khusus)</span>
+              <Link :href="route('platform-admin.tenant.show', tenant.id)" class="text-xs text-primary-600 hover:underline block">Edit</Link>
             </td>
             <td class="p-3">
               <span :class="tenant.paid_this_month ? 'text-green-600' : 'text-red-500'" class="font-medium">
@@ -48,6 +49,7 @@
                 {{ tenant.active_until }}
                 <span v-if="tenant.is_expired" class="block text-xs">Kedaluwarsa</span>
               </span>
+              <Link :href="route('platform-admin.tenant.show', tenant.id)" class="text-xs text-primary-600 hover:underline block">Edit</Link>
             </td>
             <td class="p-3">{{ tenant.created_at }}</td>
             <td class="p-3">
