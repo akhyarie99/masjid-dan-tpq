@@ -413,6 +413,7 @@ Route::middleware(['auth'])->group(function () {
                 });
                 Route::middleware('permission:tpq.daily-progress.manage')->group(function () {
                     Route::post('santri/{student}', [TpqDailyProgressController::class, 'storeStudent'])->name('santri.store');
+                    Route::post('santri/{student}/naik-jilid', [TpqDailyProgressController::class, 'promoteLevel'])->name('santri.promote');
                     Route::post('kelas/{class}', [TpqDailyProgressController::class, 'store'])->name('store');
                 });
             });

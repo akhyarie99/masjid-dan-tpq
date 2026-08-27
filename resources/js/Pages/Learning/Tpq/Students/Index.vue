@@ -34,18 +34,19 @@
               <th class="w-8">
                 <input type="checkbox" :checked="allOnPageSelected" @change="toggleSelectAll" />
               </th>
-              <th>NIS</th><th>Nama</th><th>Kelas</th><th>Wali</th><th>Status</th><th></th>
+              <th>NIS</th><th>Nama</th><th>Kelas</th><th>Jenjang</th><th>Wali</th><th>Status</th><th></th>
             </tr>
           </thead>
           <tbody>
             <tr v-if="students.data.length === 0">
-              <td colspan="7" class="text-center text-[var(--text-muted)] py-8">Belum ada santri.</td>
+              <td colspan="8" class="text-center text-[var(--text-muted)] py-8">Belum ada santri.</td>
             </tr>
             <tr v-for="student in students.data" :key="student.id">
               <td><input type="checkbox" :value="student.id" v-model="selected" /></td>
               <td>{{ student.nis }}</td>
               <td>{{ student.name }}</td>
               <td>{{ student.student_classes?.[0]?.class?.name ?? '-' }}</td>
+              <td>{{ levelLabel(student) }}</td>
               <td>{{ student.guardian_name ?? '-' }} <span class="text-xs text-[var(--text-muted)]">({{ student.guardian_phone }})</span></td>
               <td><AppBadge :variant="statusVariant(student.status)">{{ statusLabel(student.status) }}</AppBadge></td>
               <td>
@@ -154,6 +155,10 @@ function submitImport() {
     preserveScroll: true,
     onSuccess: () => { showImport.value = false },
   })
+}
+
+function levelLabel(student) {
+  return student.current_method === 'quran' ? "Al-Qur'an" : `Iqro ${student.current_jilid}`
 }
 
 function statusLabel(status) {

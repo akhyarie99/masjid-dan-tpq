@@ -57,6 +57,8 @@ class TpqStudent extends Model
         'entry_date',
         'exit_date',
         'notes',
+        'current_method',
+        'current_jilid',
     ];
 
     protected $hidden = [
@@ -123,5 +125,33 @@ class TpqStudent extends Model
     public function certificates(): HasMany
     {
         return $this->hasMany(TpqCertificate::class, 'student_id');
+    }
+
+    public function levelPromotions(): HasMany
+    {
+        return $this->hasMany(TpqLevelPromotion::class, 'student_id');
+    }
+
+    public function levelLabel(): string
+    {
+        return $this->current_method === 'quran' ? "Al-Qur'an" : "Iqro {$this->current_jilid}";
+    }
+
+    /**
+     * Jenjang berikutnya kalau naik jilid sekarang, atau null kalau sudah di
+     * jenjang tertinggi (Al-Qur'an) — dipakai sekaligus untuk menampilkan label
+     * tombol "Naik ke ..." dan untuk memvalidasi aksi kenaikannya sendiri.
+     */
+    public function nextLevel(): ?array
+    {
+        if ($this->current_method === 'quran') {
+            return null;
+        }
+
+        if ($this->current_jilid >= 6) {
+            return ['method' => 'quran', 'jilid' => null];
+        }
+
+        return ['method' => 'iqro', 'jilid' => $this->current_jilid + 1];
     }
 }

@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Models\TpqAcademicYear;
 use App\Models\TpqClass;
 use App\Models\TpqDailyProgress;
+use App\Models\TpqLevelPromotion;
 use App\Models\TpqStudent;
 use App\Models\TpqStudentClass;
 use App\Services\GuardianNotifier;
@@ -53,6 +54,7 @@ class TpqDailyProgressController extends Controller
                 'nis' => $s->nis,
                 'photo' => $s->photo,
                 'class' => $s->studentClasses->first()?->class?->name,
+                'level_label' => $s->levelLabel(),
             ]);
 
         return response()->json(['students' => $students]);
@@ -80,6 +82,18 @@ class TpqDailyProgressController extends Controller
             ->orderByDesc('date')
             ->first();
 
+        // method/jilid HARUS ikut jenjang resmi santri (current_method/
+        // current_jilid), bukan tebak-tebakan dari entri terakhir — entri
+        // terakhir bisa saja dari sebelum santri naik jilid. halaman/surah/ayat
+        // masih boleh dilanjutkan dari entri terakhir, TAPI cuma kalau entri itu
+        // memang di jenjang yang sama; kalau sudah naik jilid, itu bukan
+        // lanjutan yang relevan lagi.
+        $continuesFromLastEntry = $lastEntry
+            && $lastEntry->method === $student->current_method
+            && $lastEntry->jilid === $student->current_jilid;
+
+        $next = $student->nextLevel();
+
         return Inertia::render('Learning/Tpq/DailyProgress/InputSantri', [
             'date' => $date,
             'student' => [
@@ -90,16 +104,53 @@ class TpqDailyProgressController extends Controller
                 'class' => $classData?->class?->name,
                 'class_id' => $classData?->class_id,
                 'filled' => (bool) $todayEntry,
-                'method' => $lastEntry?->method ?? 'iqro',
-                'jilid' => $lastEntry?->jilid,
-                'halaman' => $todayEntry?->halaman ?? $lastEntry?->halaman,
-                'surah' => $lastEntry?->surah,
+                'method' => $todayEntry?->method ?? $student->current_method,
+                'jilid' => $todayEntry?->jilid ?? $student->current_jilid,
+                'halaman' => $todayEntry?->halaman ?? ($continuesFromLastEntry ? $lastEntry->halaman : null),
+                'surah' => $todayEntry?->surah ?? ($continuesFromLastEntry ? $lastEntry->surah : null),
                 'ayat_awal' => $todayEntry?->ayat_awal,
                 'ayat_akhir' => $todayEntry?->ayat_akhir,
                 'keterangan' => $todayEntry?->keterangan ?? 'lancar',
                 'catatan' => $todayEntry?->catatan,
+                'level_label' => $student->levelLabel(),
+                'next_level_label' => $next ? ($next['method'] === 'quran' ? "Al-Qur'an" : "Iqro {$next['jilid']}") : null,
+                'recent_promotions' => $student->levelPromotions()
+                    ->with('promoter:id,name')
+                    ->latest('created_at')
+                    ->limit(3)
+                    ->get()
+                    ->map(fn (TpqLevelPromotion $p) => [
+                        'from_label' => $p->from_method === 'quran' ? "Al-Qur'an" : "Iqro {$p->from_jilid}",
+                        'to_label' => $p->to_method === 'quran' ? "Al-Qur'an" : "Iqro {$p->to_jilid}",
+                        'date' => $p->created_at->toDateString(),
+                        'promoted_by' => $p->promoter?->name,
+                    ]),
             ],
         ]);
+    }
+
+    public function promoteLevel(Request $request, TpqStudent $student): RedirectResponse
+    {
+        $this->authorizeSameMasjid($request, $student);
+
+        $next = $student->nextLevel();
+
+        if (! $next) {
+            return back()->with('error', "{$student->name} sudah di jenjang tertinggi (Al-Qur'an).");
+        }
+
+        TpqLevelPromotion::create([
+            'student_id' => $student->id,
+            'from_method' => $student->current_method,
+            'from_jilid' => $student->current_jilid,
+            'to_method' => $next['method'],
+            'to_jilid' => $next['jilid'],
+            'promoted_by' => $request->user()->id,
+        ]);
+
+        $student->update(['current_method' => $next['method'], 'current_jilid' => $next['jilid']]);
+
+        return back()->with('success', "Jenjang {$student->name} naik ke {$student->fresh()->levelLabel()}.");
     }
 
     public function storeStudent(Request $request, TpqStudent $student, GuardianNotifier $notifier): RedirectResponse

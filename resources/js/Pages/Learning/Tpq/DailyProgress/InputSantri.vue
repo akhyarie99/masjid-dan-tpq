@@ -18,7 +18,31 @@
             <p class="text-sm text-[var(--text-muted)]">{{ student.nis }} · {{ student.class ?? 'Belum ada kelas' }}</p>
           </div>
         </div>
-        <p class="text-xs text-[var(--text-muted)] mb-5">{{ formatDate(date) }}</p>
+        <p class="text-xs text-[var(--text-muted)] mb-3">{{ formatDate(date) }}</p>
+
+        <div class="flex items-center justify-between gap-2 bg-[var(--bg-muted)] rounded-lg px-3 py-2 mb-5">
+          <div>
+            <p class="text-[10px] uppercase tracking-wide text-[var(--text-muted)]">Jenjang Saat Ini</p>
+            <p class="text-sm font-semibold text-[var(--text-primary)]">{{ student.level_label }}</p>
+          </div>
+          <button
+            v-if="student.next_level_label"
+            type="button"
+            class="text-xs font-medium text-primary-600 hover:underline whitespace-nowrap"
+            @click="confirmPromote"
+          >
+            Naik ke {{ student.next_level_label }} →
+          </button>
+        </div>
+
+        <details v-if="student.recent_promotions?.length" class="mb-5 -mt-3">
+          <summary class="text-xs text-[var(--text-muted)] cursor-pointer hover:underline">Riwayat kenaikan jenjang</summary>
+          <ul class="mt-2 space-y-1">
+            <li v-for="(p, i) in student.recent_promotions" :key="i" class="text-xs text-[var(--text-muted)]">
+              {{ p.from_label }} → {{ p.to_label }} · {{ formatDate(p.date) }}<span v-if="p.promoted_by"> · {{ p.promoted_by }}</span>
+            </li>
+          </ul>
+        </details>
 
         <div v-if="student.filled" class="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2 mb-4">
           Sudah diisi hari ini — simpan lagi untuk memperbarui (tidak akan kirim notifikasi dobel ke wali).
@@ -134,6 +158,24 @@ function save() {
     preserveScroll: true,
     onSuccess: () => {
       router.visit(route('admin.tpq.daily-progress.index', { date: props.date }))
+    },
+  })
+}
+
+function confirmPromote() {
+  if (!confirm(`Naikkan jenjang ${props.student.name} ke ${props.student.next_level_label}?`)) return
+
+  router.post(route('admin.tpq.daily-progress.santri.promote', props.student.id), {}, {
+    preserveScroll: true,
+    onSuccess: () => {
+      // Props sudah ter-refresh dengan jenjang baru — sinkronkan form input
+      // supaya kalau belum diisi hari ini, langsung ikut jenjang baru tanpa
+      // guru perlu ganti manual di dropdown.
+      if (!props.student.filled) {
+        form.method = props.student.method
+        form.jilid = props.student.jilid
+        form.halaman = null
+      }
     },
   })
 }

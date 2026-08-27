@@ -44,7 +44,7 @@
             </div>
             <div class="min-w-0 flex-1">
               <p class="font-medium text-[var(--text-primary)] truncate">{{ student.name }}</p>
-              <p class="text-xs text-[var(--text-muted)]">{{ student.nis }} · {{ student.class ?? 'Belum ada kelas' }}</p>
+              <p class="text-xs text-[var(--text-muted)]">{{ student.nis }} · {{ student.class ?? 'Belum ada kelas' }} · {{ student.level_label }}</p>
             </div>
           </button>
         </div>
