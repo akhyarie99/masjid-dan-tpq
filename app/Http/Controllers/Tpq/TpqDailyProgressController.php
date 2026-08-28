@@ -76,7 +76,7 @@ class TpqDailyProgressController extends Controller
             ->where('academic_year_id', $activeYear?->id)
             ->first();
 
-        $todayEntry = TpqDailyProgress::where('student_id', $student->id)->whereDate('date', $date)->first();
+        $todayEntry = TpqDailyProgress::where('student_id', $student->id)->whereDate('date', $date)->with('recorder:id,name')->first();
         $lastEntry = $todayEntry ?? TpqDailyProgress::where('student_id', $student->id)
             ->whereDate('date', '<', $date)
             ->orderByDesc('date')
@@ -112,6 +112,7 @@ class TpqDailyProgressController extends Controller
                 'ayat_akhir' => $todayEntry?->ayat_akhir,
                 'keterangan' => $todayEntry?->keterangan ?? 'lancar',
                 'catatan' => $todayEntry?->catatan,
+                'today_recorded_by' => $todayEntry?->recorder?->name,
                 'level_label' => $student->levelLabel(),
                 'next_level_label' => $next ? ($next['method'] === 'quran' ? "Al-Qur'an" : "Iqro {$next['jilid']}") : null,
                 'recent_promotions' => $student->levelPromotions()
@@ -124,6 +125,21 @@ class TpqDailyProgressController extends Controller
                         'to_label' => $p->to_method === 'quran' ? "Al-Qur'an" : "Iqro {$p->to_jilid}",
                         'date' => $p->created_at->toDateString(),
                         'promoted_by' => $p->promoter?->name,
+                    ]),
+                // Supaya ustadz bisa lihat sampai mana santri mengaji terakhir
+                // kali TANPA perlu buku catatan santri di tangan — berguna kalau
+                // santri lupa bawa buku.
+                'recent_history' => TpqDailyProgress::where('student_id', $student->id)
+                    ->with('recorder:id,name')
+                    ->orderByDesc('date')
+                    ->limit(7)
+                    ->get()
+                    ->map(fn (TpqDailyProgress $p) => [
+                        'date' => $p->date->toDateString(),
+                        'summary' => $p->summary(),
+                        'keterangan' => $p->keterangan,
+                        'catatan' => $p->catatan,
+                        'recorded_by' => $p->recorder?->name,
                     ]),
             ],
         ]);

@@ -45,7 +45,27 @@
         </details>
 
         <div v-if="student.filled" class="text-xs font-medium text-green-600 bg-green-50 dark:bg-green-900/20 rounded-lg px-3 py-2 mb-4">
-          Sudah diisi hari ini — simpan lagi untuk memperbarui (tidak akan kirim notifikasi dobel ke wali).
+          Sudah diisi hari ini{{ student.today_recorded_by ? ` oleh Ust. ${student.today_recorded_by}` : '' }} — simpan lagi untuk memperbarui (tidak akan kirim notifikasi dobel ke wali).
+        </div>
+
+        <div v-if="student.recent_history?.length" class="mb-5">
+          <p class="text-xs font-medium text-[var(--text-muted)] mb-2">Riwayat Mengaji Terakhir</p>
+          <div class="space-y-2 max-h-52 overflow-y-auto border border-[var(--border)] rounded-lg p-3">
+            <div v-for="(h, i) in student.recent_history" :key="i" class="text-xs border-b border-[var(--border)] last:border-0 pb-2 last:pb-0">
+              <div class="flex items-center justify-between">
+                <span class="font-medium text-[var(--text-primary)]">{{ formatDate(h.date) }}</span>
+                <span
+                  class="px-2 py-0.5 rounded-full font-medium"
+                  :class="h.keterangan === 'lancar' ? 'bg-green-100 dark:bg-green-900/40 text-green-700 dark:text-green-300' : 'bg-yellow-100 dark:bg-yellow-900/40 text-yellow-700 dark:text-yellow-300'"
+                >
+                  {{ h.keterangan === 'lancar' ? 'Lancar' : 'Ulang' }}
+                </span>
+              </div>
+              <p class="text-[var(--text-muted)] mt-0.5">{{ h.summary }}</p>
+              <p v-if="h.catatan" class="italic text-[var(--text-muted)] mt-0.5">"{{ h.catatan }}"</p>
+              <p v-if="h.recorded_by" class="text-[var(--text-muted)] mt-0.5">Ust. {{ h.recorded_by }}</p>
+            </div>
+          </div>
         </div>
 
         <div class="grid grid-cols-2 gap-2 mb-4">

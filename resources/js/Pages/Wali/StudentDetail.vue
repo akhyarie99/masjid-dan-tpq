@@ -35,6 +35,7 @@
           </div>
           <p class="text-[var(--text-muted)] mt-0.5">{{ entry.summary }}</p>
           <p v-if="entry.catatan" class="text-xs text-[var(--text-muted)] italic mt-0.5">"{{ entry.catatan }}"</p>
+          <p v-if="entry.recorded_by" class="text-xs text-[var(--text-muted)] mt-0.5">Dicatat oleh: Ust. {{ entry.recorded_by }}</p>
         </li>
       </ul>
     </div>

@@ -218,6 +218,7 @@ class WaliController extends Controller
             ->get();
 
         $dailyProgress = TpqDailyProgress::where('student_id', $student->id)
+            ->with('recorder:id,name')
             ->latest('date')
             ->limit(20)
             ->get();
@@ -241,6 +242,7 @@ class WaliController extends Controller
                 'summary' => $p->summary(),
                 'keterangan' => $p->keterangan,
                 'catatan' => $p->catatan,
+                'recorded_by' => $p->recorder?->name,
             ]),
             'sppBills' => $sppBills->map(fn (TpqSppBill $b) => [
                 'id' => $b->id,
