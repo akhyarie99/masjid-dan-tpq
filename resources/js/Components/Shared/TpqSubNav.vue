@@ -19,7 +19,7 @@ import { computed } from 'vue'
 import { Link } from '@inertiajs/vue3'
 import { usePermission } from '@/composables/usePermission'
 
-const { can } = usePermission()
+const { can, canAny } = usePermission()
 
 // Tahun Ajaran/Semester/Kelas/SPP/Sertifikat/Pengaturan sengaja digerbang
 // tpq.manage (bukan tpq.view) — ini area konfigurasi TPQ, ustadz tidak
@@ -34,13 +34,13 @@ const items = [
   { label: 'Harian', route: 'admin.tpq.daily-progress.index', permission: 'tpq.daily-progress.view' },
   { label: 'Nilai', route: 'admin.tpq.grade.index', permission: 'tpq.grade' },
   { label: 'Raport', route: 'admin.tpq.report.index', permission: 'tpq.report' },
-  { label: 'SPP', route: 'admin.tpq.spp.index', permission: 'tpq.manage' },
+  { label: 'Infaq', route: 'admin.tpq.spp.index', permission: ['tpq.manage', 'finance.create'] },
   { label: 'Sertifikat', route: 'admin.tpq.sertifikat.index', permission: 'tpq.manage' },
   { label: 'Pengaturan', route: 'admin.tpq.pengaturan.edit', permission: 'tpq.manage' },
 ]
 
 const visibleItems = computed(() =>
-  items.filter((item) => route().has(item.route) && can(item.permission))
+  items.filter((item) => route().has(item.route) && (Array.isArray(item.permission) ? canAny(item.permission) : can(item.permission)))
 )
 
 function isActive(routeName) {

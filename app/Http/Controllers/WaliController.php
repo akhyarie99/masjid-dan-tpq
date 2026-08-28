@@ -7,6 +7,7 @@ use App\Mail\WaliResetPasswordMail;
 use App\Models\TpqDailyProgress;
 use App\Models\TpqGuardianPushSubscription;
 use App\Models\TpqReportCard;
+use App\Models\TpqSppBill;
 use App\Models\TpqStudent;
 use App\Models\WaliAccount;
 use App\Models\WaliPasswordResetToken;
@@ -221,6 +222,12 @@ class WaliController extends Controller
             ->limit(20)
             ->get();
 
+        $sppBills = TpqSppBill::where('student_id', $student->id)
+            ->orderByDesc('year')
+            ->orderByDesc('month')
+            ->limit(12)
+            ->get();
+
         return Inertia::render('Wali/StudentDetail', [
             'student' => [
                 'id' => $student->id,
@@ -235,7 +242,55 @@ class WaliController extends Controller
                 'keterangan' => $p->keterangan,
                 'catatan' => $p->catatan,
             ]),
+            'sppBills' => $sppBills->map(fn (TpqSppBill $b) => [
+                'id' => $b->id,
+                'month' => $b->month,
+                'year' => $b->year,
+                'amount' => (float) $b->amount,
+                'paid_amount' => (float) $b->paid_amount,
+                'status' => $b->status,
+                'proof_status' => $b->proof_status,
+                'proof_file_url' => $b->proof_file_url,
+                'proof_rejection_reason' => $b->proof_rejection_reason,
+            ]),
         ]);
+    }
+
+    /**
+     * Wali kirim bukti transfer Infaq sendiri lewat portal — admin yang
+     * memverifikasi ke rekening lalu Setujui/Tolak (lihat
+     * TpqSppController::approveProof/rejectProof). Bill yang sudah lunas atau
+     * masih menunggu review sebelumnya sengaja ditolak di sini supaya tidak ada
+     * bukti dobel yang tumpang tindih untuk tagihan yang sama.
+     */
+    public function sppUploadProof(Request $request, TpqSppBill $bill): RedirectResponse
+    {
+        $account = $this->currentAccount($request);
+        abort_unless($account->students()->where('tpq_students.id', $bill->student_id)->exists(), 403);
+
+        if ($bill->status === 'paid') {
+            return back()->with('error', 'Tagihan ini sudah lunas.');
+        }
+        if ($bill->proof_status === 'pending') {
+            return back()->with('error', 'Bukti transfer untuk tagihan ini sudah dikirim dan masih menunggu konfirmasi.');
+        }
+
+        $data = $request->validate([
+            'proof_file' => ['required', 'file', 'mimes:jpg,jpeg,png,pdf', 'max:5120'],
+        ]);
+
+        if ($bill->proof_file) {
+            Storage::disk('public')->delete($bill->proof_file);
+        }
+
+        $bill->update([
+            'proof_file' => $request->file('proof_file')->store('spp-proofs', 'public'),
+            'proof_status' => 'pending',
+            'proof_submitted_at' => now(),
+            'proof_rejection_reason' => null,
+        ]);
+
+        return back()->with('success', 'Bukti transfer berhasil dikirim, menunggu konfirmasi admin.');
     }
 
     public function updateNotificationPreferences(Request $request): RedirectResponse

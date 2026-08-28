@@ -6,7 +6,7 @@
 
     <div class="card p-5 mb-4">
       <p class="text-sm font-medium text-[var(--text-primary)] mb-1">Notifikasi</p>
-      <p class="text-xs text-[var(--text-muted)] mb-4">Dapatkan kabar saat ananda mengaji, nilai diperbarui, atau ada tagihan SPP.</p>
+      <p class="text-xs text-[var(--text-muted)] mb-4">Dapatkan kabar saat ananda mengaji, nilai diperbarui, atau ada tagihan Infaq.</p>
 
       <div class="space-y-3">
         <div class="flex items-center justify-between">

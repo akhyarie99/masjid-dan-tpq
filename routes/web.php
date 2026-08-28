@@ -115,6 +115,7 @@ Route::prefix('wali')->name('wali.')->group(function () {
         Route::get('/dashboard', [WaliController::class, 'dashboard'])->name('dashboard');
         Route::get('/manifest.webmanifest', [WaliController::class, 'manifest'])->name('manifest');
         Route::get('/santri/{student}', [WaliController::class, 'studentDetail'])->name('santri');
+        Route::post('/spp/{bill}/bukti', [WaliController::class, 'sppUploadProof'])->name('spp.proof.upload');
         Route::get('/raport/{reportCard}', [WaliController::class, 'reportCard'])->name('reportcard');
         Route::get('/raport/{reportCard}/pdf', [WaliController::class, 'reportCardPdf'])->name('reportcard.pdf');
         Route::post('/notifikasi', [WaliController::class, 'updateNotificationPreferences'])->name('notifications.update');
@@ -376,6 +377,8 @@ Route::middleware(['auth'])->group(function () {
                 Route::get('spp', [TpqSppController::class, 'index'])->name('spp.index');
                 Route::post('spp/generate', [TpqSppController::class, 'generateBills'])->name('spp.generate');
                 Route::post('spp/{bill}/bayar', [TpqSppController::class, 'pay'])->name('spp.pay');
+                Route::post('spp/{bill}/bukti/setujui', [TpqSppController::class, 'approveProof'])->name('spp.proof.approve');
+                Route::post('spp/{bill}/bukti/tolak', [TpqSppController::class, 'rejectProof'])->name('spp.proof.reject');
                 Route::post('spp/kirim-reminder', [TpqSppController::class, 'sendReminders'])->name('spp.reminders');
             });
 

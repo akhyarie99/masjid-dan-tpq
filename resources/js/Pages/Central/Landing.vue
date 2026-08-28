@@ -34,7 +34,7 @@
         <div class="card p-6">
           <div class="text-2xl mb-2">📚</div>
           <h3 class="font-semibold text-[var(--text-primary)] mb-1">Manajemen TPQ Lengkap</h3>
-          <p class="text-sm text-[var(--text-muted)]">Nilai, hafalan, progres harian, SPP, raport, hingga portal khusus wali santri.</p>
+          <p class="text-sm text-[var(--text-muted)]">Nilai, hafalan, progres harian, Infaq, raport, hingga portal khusus wali santri.</p>
         </div>
         <div class="card p-6">
           <div class="text-2xl mb-2">💰</div>
