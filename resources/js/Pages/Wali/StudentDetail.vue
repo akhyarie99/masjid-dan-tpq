@@ -20,9 +20,15 @@
     </div>
 
     <div class="card p-5 mb-4">
-      <p class="text-sm font-medium text-[var(--text-primary)] mb-2">Progres Mengaji Terbaru</p>
-      <EmptyState v-if="dailyProgress.length === 0" title="Belum ada catatan mengaji." />
-      <ul v-else class="space-y-2">
+      <div class="flex items-center justify-between gap-2 mb-3">
+        <p class="text-sm font-medium text-[var(--text-primary)]">Progres Mengaji</p>
+        <div class="flex items-center gap-2">
+          <AppSelect v-model="filterMonth" :options="monthOptions" class="w-32" @update:modelValue="reload" />
+          <AppInput v-model.number="filterYear" type="number" class="w-20" @change="reload" />
+        </div>
+      </div>
+      <EmptyState v-if="dailyProgress.length === 0" title="Belum ada catatan mengaji bulan ini." />
+      <ul v-else class="space-y-2 max-h-96 overflow-y-auto pr-1">
         <li v-for="(entry, index) in dailyProgress" :key="index" class="text-sm border-b border-[var(--border)] last:border-0 pb-2 last:pb-0">
           <div class="flex items-center justify-between">
             <span class="text-[var(--text-primary)] font-medium">{{ formatDate(entry.date) }}</span>
@@ -106,20 +112,32 @@
 
 <script setup>
 import { ref } from 'vue'
-import { Head, Link, useForm } from '@inertiajs/vue3'
+import { Head, Link, router, useForm } from '@inertiajs/vue3'
 import { ArrowLeft as ArrowLeftIcon } from 'lucide-vue-next'
 import dayjs from 'dayjs'
 import WaliLayout from '@/Layouts/WaliLayout.vue'
 import EmptyState from '@/Components/Shared/EmptyState.vue'
 import AppModal from '@/Components/UI/AppModal.vue'
 import AppButton from '@/Components/UI/AppButton.vue'
+import AppSelect from '@/Components/UI/AppSelect.vue'
+import AppInput from '@/Components/UI/AppInput.vue'
 
 const props = defineProps({
   student: { type: Object, required: true },
   dailyProgress: { type: Array, default: () => [] },
+  progressMonth: { type: Number, required: true },
+  progressYear: { type: Number, required: true },
   reportCards: { type: Array, default: () => [] },
   sppBills: { type: Array, default: () => [] },
 })
+
+const filterMonth = ref(props.progressMonth)
+const filterYear = ref(props.progressYear)
+const monthOptions = Array.from({ length: 12 }, (_, i) => ({ label: dayjs().month(i).format('MMMM'), value: i + 1 }))
+
+function reload() {
+  router.get(route('wali.santri', props.student.id), { month: filterMonth.value, year: filterYear.value }, { preserveState: true, preserveScroll: true })
+}
 
 function formatDate(value) {
   return dayjs(value).format('DD MMM YYYY')

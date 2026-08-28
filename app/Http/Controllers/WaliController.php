@@ -217,10 +217,14 @@ class WaliController extends Controller
             ->latest('created_at')
             ->get();
 
+        $month = $request->integer('month') ?: now()->month;
+        $year = $request->integer('year') ?: now()->year;
+
         $dailyProgress = TpqDailyProgress::where('student_id', $student->id)
+            ->whereYear('date', $year)
+            ->whereMonth('date', $month)
             ->with('recorder:id,name')
             ->latest('date')
-            ->limit(20)
             ->get();
 
         $sppBills = TpqSppBill::where('student_id', $student->id)
@@ -237,6 +241,8 @@ class WaliController extends Controller
                 'photo' => $student->photo,
             ],
             'reportCards' => $reportCards,
+            'progressMonth' => (int) $month,
+            'progressYear' => (int) $year,
             'dailyProgress' => $dailyProgress->map(fn (TpqDailyProgress $p) => [
                 'date' => $p->date->toDateString(),
                 'summary' => $p->summary(),
